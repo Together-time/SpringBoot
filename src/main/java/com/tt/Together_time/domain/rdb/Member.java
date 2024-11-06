@@ -28,4 +28,8 @@ public class Member {
     @OneToMany(mappedBy = "member")
     private List<Message> messageList = new ArrayList<>();
 */
+    public Member(String email, String nickname){
+        this.email = email;
+        this.nickname = nickname;
+    }
 }
