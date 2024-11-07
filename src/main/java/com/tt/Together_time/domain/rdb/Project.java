@@ -29,10 +29,6 @@ public class Project {
     @LastModifiedDate
     private LocalDateTime lastEditedAt;
     /*
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member owner;
-
     @OneToMany(mappedBy = "project")
     private List<Team> teamList = new ArrayList<>();
 

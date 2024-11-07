@@ -20,9 +20,6 @@ public class Member {
     private String nickname;
 /*
     @OneToMany(mappedBy = "member")
-    private List<Project> projectList = new ArrayList<>();
-
-    @OneToMany(mappedBy = "member")
     private List<Team> teamList = new ArrayList<>();
 
     @OneToMany(mappedBy = "member")
