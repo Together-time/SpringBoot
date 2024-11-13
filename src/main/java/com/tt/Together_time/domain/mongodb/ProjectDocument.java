@@ -19,6 +19,4 @@ public class ProjectDocument {
     private Long projectId;
 
     private List<String> tags;
-
-
 }

@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 //JWT 생성 및 검증 클래스
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")  // application.yml의 jwt.secret 값 주입
+    @Value("${spring.jwt.secret}")  // application.yml의 jwt.secret 값 주입
     private String secretKey;
 
-    public String generateToken(String userId) {
+    public String generateToken(String email) {
         return Jwts.builder()
-                .setSubject(userId)
+                .setSubject(email)
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
