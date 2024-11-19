@@ -12,4 +12,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m FROM Member m WHERE m.email LIKE %:inviteMember% OR m.nickname LIKE %:inviteMember%")
     Optional<Member> findMember(String inviteMember);
+
+    Optional<Member> findByEmail(String email);
 }

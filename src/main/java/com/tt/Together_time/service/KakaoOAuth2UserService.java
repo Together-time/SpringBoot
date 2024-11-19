@@ -1,5 +1,7 @@
 package com.tt.Together_time.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.repository.AuthRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,39 +23,24 @@ public class KakaoOAuth2UserService {
     private String KAKAO_USERINFO_REQUEST_URL;
     private final AuthRepository authRepository;
 
-    public Member getUserInfoFromKakao(String kakaoToken) {
+    public KakaoUserInfo getUserInfo(String kakaoToken) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + kakaoToken);
+        headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<String> response = restTemplate.exchange(
+                KAKAO_USERINFO_REQUEST_URL, HttpMethod.GET, request, String.class);
 
+        //System.out.println("카카오 API 응답: " + response.getBody());
+
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    KAKAO_USERINFO_REQUEST_URL,
-                    HttpMethod.GET,
-                    entity,
-                    String.class
-            );
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            String email = jsonNode.path("kakao_account").path("email").asText();
-            String nickname = jsonNode.path("kakao_account").path("profile").path("nickname").asText();
-
-            Optional<Member> memberOptional = authRepository.findByEmail(email);
-            Member member = memberOptional.orElseGet(() -> {
-                Member newMember = new Member(email, nickname);
-                authRepository.save(newMember);
-                return newMember;
-            });
-
-            return member;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            return objectMapper.readValue(response.getBody(), KakaoUserInfo.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("카카오 사용자 정보 파싱 실패", e);
         }
     }
 }
