@@ -1,6 +1,7 @@
 package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
+import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.service.KakaoOAuth2UserService;
 import com.tt.Together_time.service.MemberService;
@@ -20,18 +21,18 @@ public class AuthController {
     private final KakaoOAuth2UserService kakaoService; // 카카오 서비스: 토큰으로 사용자 정보 조회
 
     @GetMapping("/user")
-    public ResponseEntity<?> getUserInfo() {
+    public ResponseEntity<MemberDto> getUserInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         String email = authentication.getName();
         Member member = memberService.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        return ResponseEntity.ok().body(member.getEmail());
+        return ResponseEntity.ok().body(new MemberDto(member.getNickname(), member.getEmail()));
     }
 
     @PostMapping("/kakao")

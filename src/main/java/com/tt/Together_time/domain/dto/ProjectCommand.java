@@ -9,7 +9,6 @@ import java.util.List;
 @Getter
 public class ProjectCommand {
     private String title;
-    private ProjectVisibility status;
     private List<String> tags;
     private List<Member> members;
 }
