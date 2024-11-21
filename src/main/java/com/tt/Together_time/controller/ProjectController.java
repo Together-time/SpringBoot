@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects")
@@ -47,7 +49,7 @@ public class ProjectController {
         }
     }
 
-    @PatchMapping("/{projectId}")
+    @PutMapping("/{projectId}")
     public ResponseEntity<Boolean> updateProject(@PathVariable Long projectId, @RequestBody ProjectCommand projectCommand){
         try{
             projectService.updateProject(projectId, projectCommand.getTitle(), projectCommand.getTags());
@@ -57,6 +59,22 @@ public class ProjectController {
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
         } catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
+    
+    //태그 편집
+    @PutMapping("/{projectId}/tag")
+    public ResponseEntity<Boolean> updateProjectTags(@PathVariable Long projectId, @RequestParam List<String> tags){
+        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        try{
+            projectService.updateProjectTags(loggedInMember, projectId, tags);
+            return ResponseEntity.ok(true);
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
+        }catch (AccessDeniedException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
         }
     }

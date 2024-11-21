@@ -40,9 +40,15 @@ public class ProjectService {
     public ProjectDto getProject(Long projectId){
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
+
+        ProjectDto projectDto = projectDtoService.convertToDto(project);
+
         //redisViewRepository.incrementView(projectId);
 
-        return projectDtoService.convertToDto(project);
+        ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
+        projectDto.setTags(projectDocument.getTags());
+
+        return projectDto;
     }
 
     @Transactional
@@ -84,7 +90,7 @@ public class ProjectService {
                     : ProjectVisibility.PUBLIC;
             projectRepository.updateProjectStatus(projectId, newVisibility);
         }else
-            throw new AccessDeniedException("초대 권한이 없습니다.");
+            throw new AccessDeniedException("권한이 없습니다.");
     }
 
     public void deleteById(MemberDto logged, Long projectId) {
@@ -96,6 +102,17 @@ public class ProjectService {
         if(isExistingMember){
             projectRepository.deleteById(projectId);
         }else
-            throw new AccessDeniedException("초대 권한이 없습니다.");
+            throw new AccessDeniedException("권한이 없습니다.");
+    }
+
+    public void updateProjectTags(MemberDto logged, Long projectId, List<String> tags) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(()-> new EntityNotFoundException());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged.getEmail());
+
+        if(isExistingMember)
+            projectMongoRepository.replaceTags(projectId, tags);
+        else
+            throw new AccessDeniedException("권한이 없습니다.");
     }
 }
