@@ -9,7 +9,6 @@ import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.repository.ProjectMongoRepository;
 import com.tt.Together_time.repository.ProjectRepository;
-//import com.tt.Together_time.repository.RedisViewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ import java.util.Optional;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMongoRepository projectMongoRepository;
-    //private final RedisViewRepository redisViewRepository;
     private final TeamService teamService;
     private final ProjectDtoService projectDtoService;
 
@@ -37,13 +35,24 @@ public class ProjectService {
         return projectMongoRepository.findByTagsContaining(tag);
     }
 
+    public void updateProjectTags(MemberDto logged, Long projectId, List<String> tags) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(()-> new EntityNotFoundException());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged.getEmail());
+
+        if(isExistingMember)
+            projectMongoRepository.replaceTags(projectId, tags);
+        else
+            throw new AccessDeniedException("권한이 없습니다.");
+    }
+    
     public ProjectDto getProject(Long projectId){
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
 
         ProjectDto projectDto = projectDtoService.convertToDto(project);
 
-        //redisViewRepository.incrementView(projectId);
+        //조회수 증가
 
         ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
         projectDto.setTags(projectDocument.getTags());
@@ -61,7 +70,8 @@ public class ProjectService {
         );
 
         for(Member member : projectCommand.getMembers()) {
-            teamService.addTeam(member, project);
+            System.out.println("member "+member.getNickname());
+            teamService.addTeamByCreateProject(member, project);
         }
 
         ProjectDocument projectDocument = new ProjectDocument(null, project.getId(), projectCommand.getTags());
@@ -102,17 +112,6 @@ public class ProjectService {
         if(isExistingMember){
             projectRepository.deleteById(projectId);
         }else
-            throw new AccessDeniedException("권한이 없습니다.");
-    }
-
-    public void updateProjectTags(MemberDto logged, Long projectId, List<String> tags) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged.getEmail());
-
-        if(isExistingMember)
-            projectMongoRepository.replaceTags(projectId, tags);
-        else
             throw new AccessDeniedException("권한이 없습니다.");
     }
 }

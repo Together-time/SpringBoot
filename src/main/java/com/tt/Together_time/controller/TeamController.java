@@ -3,16 +3,12 @@ package com.tt.Together_time.controller;
 import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.dto.ProjectDto;
 import com.tt.Together_time.domain.rdb.Member;
-import com.tt.Together_time.service.MemberService;
-import com.tt.Together_time.service.ProjectService;
 import com.tt.Together_time.service.TeamService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +19,6 @@ import java.util.List;
 public class TeamController {
     private final AuthController authController;
     private final TeamService teamService;
-    private final MemberService memberService;
-    private final ProjectService projectService;
 
     //현재 로그인한 사용자가 참여 중인 프로젝트 리스트
     @GetMapping
@@ -59,13 +53,13 @@ public class TeamController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<Boolean> addTeam(@RequestParam String inviteMember, @RequestParam Long projectId){
+    @PostMapping    //팀원 추가
+    public ResponseEntity<Boolean> addTeam(@RequestParam Member member, @RequestParam Long projectId){
         MemberDto loggedInMember = authController.getUserInfo().getBody();
 
         if(loggedInMember!=null){
             try {
-                teamService.addTeam(loggedInMember, inviteMember, projectId);
+                teamService.addTeam(loggedInMember, member, projectId);
                 return ResponseEntity.ok(true);
             } catch (EntityNotFoundException e){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);

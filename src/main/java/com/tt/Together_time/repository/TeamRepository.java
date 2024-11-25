@@ -18,7 +18,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query("SELECT t.project FROM Team t WHERE t.member.email = :email ORDER BY t.project.id DESC")
     List<Project> findProjectsByMemberEmail(@Param("email") String email);
 
-    @Query("SELECT t.member FROM Team t WHERE t.project.id = :projectId")
+    @Query("SELECT t FROM Team t WHERE t.project.id = :projectId")
     List<Team> findByProjectId(Long projectId);
 
     @Modifying

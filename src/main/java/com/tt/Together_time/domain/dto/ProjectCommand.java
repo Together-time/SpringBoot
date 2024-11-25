@@ -1,6 +1,5 @@
 package com.tt.Together_time.domain.dto;
 
-import com.tt.Together_time.domain.enums.ProjectVisibility;
 import com.tt.Together_time.domain.rdb.Member;
 import lombok.Getter;
 

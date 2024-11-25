@@ -7,6 +7,7 @@ import com.tt.Together_time.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,8 +36,8 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
-    public Optional<Member> findMember(String inviteMember) {
-        return memberRepository.findMember(inviteMember);
+    public List<Member> findMember(String keyword) {
+        return memberRepository.findMember(keyword);
     }
 
     public Optional<Member> findById(Long memberId) {
