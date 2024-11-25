@@ -30,13 +30,13 @@ public class TeamService {
         return projectList.stream().map(projectDtoService::convertToDto).collect(Collectors.toList());
     }
 
-    public void addTeam(MemberDto logged, String inviteMember, Long projectId) {
+    public void addTeam(MemberDto logged, Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
         //초대 권한 확인
         boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
         if(isExistingMember){
-            Member newMember = memberRepository.findMember(inviteMember)
+            Member newMember = memberRepository.findById(member.getId())
                     .orElseThrow(()->new EntityNotFoundException());
 
             teamRepository.save(
@@ -53,7 +53,7 @@ public class TeamService {
         return teamRepository.existsByProjectIdAndMemberEmail(projectId, email);
     }
 
-    public void addTeam(Member member, Project project) {
+    public void addTeamByCreateProject(Member member, Project project) {
         //초대하려는 유효한 멤버인지 검증
         Member newMember = memberRepository.findById(member.getId())
                 .orElseThrow(()->new EntityNotFoundException());
@@ -80,7 +80,10 @@ public class TeamService {
     }
 
     public List<Member> findByProjectId(Long projectId) {
-        List<Team> teamList = teamRepository.findByProjectId(projectId);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(()->new EntityNotFoundException());
+
+        List<Team> teamList = teamRepository.findByProjectId(project.getId());
 
         List<Member> members = teamList.stream().map(Team::getMember).collect(Collectors.toList());
 
