@@ -79,12 +79,18 @@ public class ProjectService {
     }
 
     @Transactional
-    public void updateProject(Long projectId, String title, List<String> tags) {
+    public void updateProject(Long projectId, ProjectCommand projectCommand) {
+        String title = projectCommand.getTitle();
+        List<Member> members = projectCommand.getMembers();
+        List<String> tags = projectCommand.getTags();
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
         if(project != null) {
-            projectRepository.updateProject(projectId, title);
-            projectMongoRepository.replaceTags(projectId, tags);
+            if(!project.getTitle().equals(title))
+                projectRepository.updateProject(project.getId(), title);
+            teamService.updateTeam(project, members);
+            projectMongoRepository.replaceTags(project.getId(), tags);
         }
     }
 

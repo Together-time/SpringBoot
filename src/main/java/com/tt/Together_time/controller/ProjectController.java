@@ -52,7 +52,7 @@ public class ProjectController {
     @PutMapping("/{projectId}")
     public ResponseEntity<Boolean> updateProject(@PathVariable Long projectId, @RequestBody ProjectCommand projectCommand){
         try{
-            projectService.updateProject(projectId, projectCommand.getTitle(), projectCommand.getTags());
+            projectService.updateProject(projectId, projectCommand);
             return ResponseEntity.ok().body(true);
         } catch (IllegalArgumentException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
