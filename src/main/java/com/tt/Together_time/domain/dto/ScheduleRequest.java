@@ -1,31 +1,20 @@
-package com.tt.Together_time.domain.rdb;
+package com.tt.Together_time.domain.dto;
 
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Entity
 @Getter
-@Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Schedule {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ScheduleRequest {
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "project_id")
-    private Project project;
-
     private String title;
-
-    @Column(columnDefinition = "TEXT")
     private String memo;
-
     private LocalDate startedDate;
     private LocalTime startedTime;
     private LocalDate endedDate;

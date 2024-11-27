@@ -68,7 +68,7 @@ public class TeamService {
     }
 
     @Transactional
-    public void removeTeam(MemberDto memberDto, Long projectId) {
+    public void leaveTeam(MemberDto memberDto, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
         //권한 확인

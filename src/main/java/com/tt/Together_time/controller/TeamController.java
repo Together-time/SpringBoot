@@ -80,7 +80,7 @@ public class TeamController {
 
         if(loggedInMember!=null){
             try{
-                teamService.removeTeam(loggedInMember, projectId);
+                teamService.leaveTeam(loggedInMember, projectId);
                 return ResponseEntity.ok(true);
             } catch (EntityNotFoundException e){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
