@@ -70,7 +70,6 @@ public class ProjectService {
         );
 
         for(Member member : projectCommand.getMembers()) {
-            System.out.println("member "+member.getNickname());
             teamService.addTeamByCreateProject(member, project);
         }
 
