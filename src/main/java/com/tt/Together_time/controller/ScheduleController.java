@@ -33,7 +33,7 @@ public class ScheduleController {
 
     @PostMapping
     public ResponseEntity<Boolean> addSchedule(@PathVariable Long projectId, @RequestBody ScheduleRequest scheduleRequest){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         try{
             scheduleService.addSchedule(loggedInMember, projectId, scheduleRequest);
@@ -51,7 +51,7 @@ public class ScheduleController {
 
     @PutMapping
     public ResponseEntity<Boolean> updateSchedule(@PathVariable Long projectId, @RequestBody ScheduleRequest scheduleRequest){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         try {
             scheduleService.updateSchedule(loggedInMember, projectId, scheduleRequest);
@@ -69,7 +69,7 @@ public class ScheduleController {
 
     @DeleteMapping("/{scheduleId}")
     public ResponseEntity<Boolean> deleteSchedule(@PathVariable Long projectId, @PathVariable Long scheduleId){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         try {
             scheduleService.deleteSchedule(loggedInMember, projectId, scheduleId);

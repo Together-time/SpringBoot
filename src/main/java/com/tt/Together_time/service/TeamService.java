@@ -30,11 +30,11 @@ public class TeamService {
         return projectList.stream().map(projectDtoService::convertToDto).collect(Collectors.toList());
     }
 
-    public void addTeam(MemberDto logged, Member member, Long projectId) {
+    public void addTeam(String logged, Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
         //권한 확인
-        boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged);
         if(isExistingMember){
             Member newMember = memberRepository.findById(member.getId())
                     .orElseThrow(()->new EntityNotFoundException());
@@ -68,14 +68,14 @@ public class TeamService {
     }
 
     @Transactional
-    public void leaveTeam(MemberDto memberDto, Long projectId) {
+    public void leaveTeam(String logged, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
         //권한 확인
-        boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, memberDto.getEmail());
+        boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
-            teamRepository.deleteMemberByEmail(memberDto.getEmail(), projectId);
+            teamRepository.deleteMemberByEmail(logged, projectId);
 
             if(findByProjectId(projectId).size()==0)
                 projectRepository.deleteById(projectId);

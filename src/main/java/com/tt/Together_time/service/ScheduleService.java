@@ -42,11 +42,11 @@ public class ScheduleService {
         return scheduleList.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-    public void addSchedule(MemberDto logged, Long projectId, ScheduleRequest scheduleRequest){
+    public void addSchedule(String logged, Long projectId, ScheduleRequest scheduleRequest){
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
             Schedule schedule = scheduleRepository.save(
@@ -65,13 +65,13 @@ public class ScheduleService {
             throw new AccessDeniedException("권한이 없습니다.");
     }
 
-    public void updateSchedule(MemberDto logged, Long projectId, ScheduleRequest scheduleRequest) {
+    public void updateSchedule(String logged, Long projectId, ScheduleRequest scheduleRequest) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
         Schedule schedule = scheduleRepository.findById(scheduleRequest.getId())
                 .orElseThrow(()->new EntityNotFoundException("일정을 찾을 수 없습니다."));
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
             schedule.setTitle(scheduleRequest.getTitle());
@@ -86,13 +86,13 @@ public class ScheduleService {
         }else throw new AccessDeniedException("권한이 없습니다.");
     }
 
-    public void deleteSchedule(MemberDto logged, Long projectId, Long scheduleId) {
+    public void deleteSchedule(String logged, Long projectId, Long scheduleId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException("프로젝트를 찾을 수 없습니다."));
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(()->new EntityNotFoundException("일정을 찾을 수 없습니다."));
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember) {
             scheduleRepository.deleteById(schedule.getId());

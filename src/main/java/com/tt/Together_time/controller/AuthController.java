@@ -2,15 +2,21 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
-import com.tt.Together_time.domain.rdb.Member;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import com.tt.Together_time.repository.RedisDao;
+import com.tt.Together_time.security.JwtTokenProvider;
 import com.tt.Together_time.service.KakaoOAuth2UserService;
 import com.tt.Together_time.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Arrays;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,9 +25,11 @@ public class AuthController {
 
     private final MemberService memberService;
     private final KakaoOAuth2UserService kakaoService; // 카카오 서비스: 토큰으로 사용자 정보 조회
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RedisDao redisDao;
 
     @GetMapping("/user")
-    public ResponseEntity<MemberDto> getUserInfo() {
+    public ResponseEntity<String> getUserInfo() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
@@ -29,16 +37,43 @@ public class AuthController {
         }
 
         String email = authentication.getName();
-        Member member = memberService.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        return ResponseEntity.ok().body(new MemberDto(member.getNickname(), member.getEmail()));
+        return ResponseEntity.ok(email);
+    }
+
+    @PostMapping("/logout")
+    public void logout(){
+        String email = getUserInfo().getBody();
+        memberService.logout(email);
     }
 
     @PostMapping("/kakao")
-    public ResponseEntity<?> kakaoLogin(@RequestParam("accessToken") String accessToken) {
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("accessToken") String accessToken, HttpServletResponse response) {
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
-        String jwtToken = memberService.kakaoLogin(userInfo);
-        return ResponseEntity.ok(jwtToken);
+        MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
+        return ResponseEntity.ok(memberDto);
+    }
+
+    @PostMapping("/refresh")    //새로운 access 토큰 발급
+    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
+        // 쿠키에서 Refresh Token 추출
+        String refreshToken = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
+
+        // Refresh Token 검증 및 Access Token 발급
+        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+        String storedRefreshToken = redisDao.getValues(email);
+
+        System.out.println("refresh token : "+storedRefreshToken);
+
+        if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
+            String newAccessToken = jwtTokenProvider.generateToken(email);
+            return ResponseEntity.ok(newAccessToken);
+        }
+
+        throw new RuntimeException("Invalid Refresh Token");
     }
 }

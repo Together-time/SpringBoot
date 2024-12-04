@@ -23,11 +23,11 @@ public class TeamController {
     //현재 로그인한 사용자가 참여 중인 프로젝트 리스트
     @GetMapping
     public ResponseEntity<List<ProjectDto>> getProjects(){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedMember = authController.getUserInfo().getBody();
 
-        if(loggedInMember!=null) {
+        if(loggedMember!=null) {
             try {
-                List<ProjectDto> projectDtoList = teamService.getProjects(loggedInMember.getEmail());
+                List<ProjectDto> projectDtoList = teamService.getProjects(loggedMember);
                 return ResponseEntity.ok().body(projectDtoList);
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -55,7 +55,7 @@ public class TeamController {
 
     @PostMapping    //팀원 추가
     public ResponseEntity<Boolean> addTeam(@RequestParam Member member, @RequestParam Long projectId){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         if(loggedInMember!=null){
             try {
@@ -76,7 +76,7 @@ public class TeamController {
 
     @DeleteMapping("/{projectId}")
     public ResponseEntity<Boolean> deleteTeam(@PathVariable Long projectId){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         if(loggedInMember!=null){
             try{

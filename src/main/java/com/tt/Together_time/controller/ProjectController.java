@@ -66,7 +66,7 @@ public class ProjectController {
     //태그 편집
     @PutMapping("/{projectId}/tag")
     public ResponseEntity<Boolean> updateProjectTags(@PathVariable Long projectId, @RequestParam List<String> tags){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
         try{
             projectService.updateProjectTags(loggedInMember, projectId, tags);
             return ResponseEntity.ok(true);
@@ -81,7 +81,7 @@ public class ProjectController {
 
     @PatchMapping("/{projectId}/visibility")
     public ResponseEntity<Boolean> updateProjectStatus(@PathVariable Long projectId){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         try{
             projectService.updateProjectStatus(loggedInMember, projectId);
@@ -99,7 +99,7 @@ public class ProjectController {
 
     @DeleteMapping("{projectId}")
     public ResponseEntity<Boolean> removeProject(@PathVariable Long projectId){
-        MemberDto loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = authController.getUserInfo().getBody();
 
         try{
             projectService.deleteById(loggedInMember, projectId);
