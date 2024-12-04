@@ -2,6 +2,7 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
+import com.tt.Together_time.exception.InvalidRefreshTokenException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import com.tt.Together_time.repository.RedisDao;
@@ -67,13 +68,12 @@ public class AuthController {
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         String storedRefreshToken = redisDao.getValues(email);
 
-        System.out.println("refresh token : "+storedRefreshToken);
+        //System.out.println("refresh token : "+storedRefreshToken);
 
         if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
             String newAccessToken = jwtTokenProvider.generateToken(email);
             return ResponseEntity.ok(newAccessToken);
         }
-
-        throw new RuntimeException("Invalid Refresh Token");
+        throw new InvalidRefreshTokenException("Invalid Refresh Token");
     }
 }
