@@ -57,23 +57,7 @@ public class AuthController {
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급
     public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
-        // 쿠키에서 Refresh Token 추출
-        String refreshToken = Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
-
-        // Refresh Token 검증 및 Access Token 발급
-        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-        String storedRefreshToken = redisDao.getValues(email);
-
-        //System.out.println("refresh token : "+storedRefreshToken);
-
-        if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
-            String newAccessToken = jwtTokenProvider.generateToken(email);
-            return ResponseEntity.ok(newAccessToken);
-        }
-        throw new InvalidRefreshTokenException("Invalid Refresh Token");
+         String newAccessToken = memberService.refreshAccessToken(request);
+         return ResponseEntity.ok(newAccessToken);
     }
 }
