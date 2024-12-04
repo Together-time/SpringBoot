@@ -9,4 +9,5 @@ import lombok.*;
 public class MemberDto {
     private String nickname;
     private String email;
+    private String accessToken;
 }

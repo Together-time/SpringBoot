@@ -35,10 +35,10 @@ public class ProjectService {
         return projectMongoRepository.findByTagsContaining(tag);
     }
 
-    public void updateProjectTags(MemberDto logged, Long projectId, List<String> tags) {
+    public void updateProjectTags(String logged, Long projectId, List<String> tags) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember)
             projectMongoRepository.replaceTags(projectId, tags);
@@ -93,11 +93,11 @@ public class ProjectService {
         }
     }
 
-    public void updateProjectStatus(MemberDto logged, Long projectId) {
+    public void updateProjectStatus(String logged, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
             ProjectVisibility newVisibility = (project.getStatus() == ProjectVisibility.PUBLIC)
@@ -108,11 +108,11 @@ public class ProjectService {
             throw new AccessDeniedException("권한이 없습니다.");
     }
 
-    public void deleteById(MemberDto logged, Long projectId) {
+    public void deleteById(String logged, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged.getEmail());
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
             projectRepository.deleteById(projectId);
