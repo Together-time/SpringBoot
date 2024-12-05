@@ -25,4 +25,8 @@ public class RedisDao {
     public void deleteValues(String key) {
         redisTemplate.delete(key);
     }
+
+    public void addToBlacklist(String token, long expiration){
+        redisTemplate.opsForValue().set(token, "blacklisted", Duration.ofMillis(expiration));
+    }
 }

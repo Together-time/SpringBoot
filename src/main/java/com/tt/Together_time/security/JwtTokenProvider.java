@@ -64,4 +64,15 @@ public class JwtTokenProvider { //JWT의 생성 및 검증 역할 수행 Utility
                 .compact();
     }
 
+    //access token 남은 유효시간
+    public Long getExpiration(String accessToken){
+        Date expiration = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(accessToken)
+                .getBody()
+                .getExpiration();
+        Long now = new Date().getTime();
+        return (expiration.getTime()-now);
+    }
 }

@@ -1,5 +1,7 @@
 package com.tt.Together_time.security;
 
+import com.tt.Together_time.exception.BlacklistedTokenException;
+import com.tt.Together_time.repository.RedisDao;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -21,6 +23,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //Authorization 헤더를 추출해 JWT 토큰 추출+유효성 검증+SecurityContext에 인증 정보 저장
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisDao redisDao;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -28,12 +31,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         try {
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                String email = jwtTokenProvider.getEmailFromToken(token);
+            if (token != null) {
 
-                Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        email, null, Collections.emptyList());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (redisDao.getValues(token) != null) {
+                    throw new BlacklistedTokenException("Token is blacklisted. Please login again.");
+                }
+                if (jwtTokenProvider.validateToken(token)) {
+                    String email = jwtTokenProvider.getEmailFromToken(token);
+
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            email, null, Collections.emptyList());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         } catch (ExpiredJwtException e) {
             // Access Token이 만료된 경우 예외 처리
@@ -45,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
-    private String resolveToken(HttpServletRequest request) {
+    public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

@@ -6,12 +6,13 @@ import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.exception.InvalidRefreshTokenException;
 import com.tt.Together_time.repository.MemberRepository;
 import com.tt.Together_time.repository.RedisDao;
+import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -24,6 +25,7 @@ import java.util.Optional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RedisDao redisDao;
 
     public MemberDto kakaoLogin(KakaoUserInfo kakaoUserInfo, HttpServletResponse response){
@@ -68,8 +70,27 @@ public class MemberService {
         return memberRepository.findById(memberId);
     }
 
-    public void logout(String email) {
-        redisDao.deleteValues(email);
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키에서 Refresh Token 추출
+        String refreshToken = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
+        if (refreshToken != null) {
+            String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+            redisDao.deleteValues(email);
+        }
+        // 클라이언트의 Refresh Token 쿠키 삭제
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0); // 쿠키 즉시 삭제
+        cookie.setPath("/");
+        response.addCookie(cookie);
+        //블랙리스트를 사용하여 access token 무효화
+        String accessToken = jwtAuthenticationFilter.resolveToken(request);
+        Long expiration = jwtTokenProvider.getExpiration(accessToken);
+        redisDao.addToBlacklist(accessToken, expiration);
     }
 
     //Access 토큰 재발급
