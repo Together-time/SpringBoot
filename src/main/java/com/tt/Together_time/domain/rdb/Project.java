@@ -35,7 +35,7 @@ public class Project {
     @OneToMany(mappedBy = "project")
     private List<Message> messageList = new ArrayList<>();
     */
-    private Long views = 0L;
+    private Long views;
 
     @Enumerated(EnumType.STRING)
     private ProjectVisibility status;

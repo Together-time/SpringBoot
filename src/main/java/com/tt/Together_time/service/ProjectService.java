@@ -9,6 +9,7 @@ import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.repository.ProjectMongoRepository;
 import com.tt.Together_time.repository.ProjectRepository;
+import com.tt.Together_time.repository.RedisDao;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class ProjectService {
     private final ProjectMongoRepository projectMongoRepository;
     private final TeamService teamService;
     private final ProjectDtoService projectDtoService;
+    private final RedisDao redisDao;
 
 
     public Optional<ProjectDocument> findTagsByProjectId(Long projectId){
@@ -118,5 +120,41 @@ public class ProjectService {
             projectRepository.deleteById(projectId);
         }else
             throw new AccessDeniedException("권한이 없습니다.");
+    }
+
+    public List<Project> findProjectsByKeyword(String keyword) {
+        List<Project> projects = projectRepository.findByKeyword(keyword);
+
+        List<ProjectDocument> projectsBytags = findProjectsByTag(keyword);
+
+        for(ProjectDocument pd : projectsBytags){
+            projects.add(projectRepository.findById(pd.getProjectId()).get());
+        }
+
+        return projects;
+    }
+
+    //조회수
+    @Transactional
+    public Long viewProject(String logged, Long projectId){
+        //같은 사용자에 대해 조회수가 1회만 증가하도록 함
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(()-> new EntityNotFoundException());
+
+        String redisKey = "views:"+String.valueOf(projectId);
+        String values = redisDao.getValues(redisKey);
+        if(values==null || values.equals("0")){
+            values = project.getViews()>0? String.valueOf(project.getViews()):String.valueOf(0);
+        }
+
+        Long views = Long.valueOf(values);
+
+        if(!redisDao.getValuesList(logged).contains(redisKey)){
+            redisDao.setValuesList(logged, redisKey);
+            views++;
+            redisDao.setValues(redisKey, String.valueOf(views));
+
+        }
+        return views;
     }
 }

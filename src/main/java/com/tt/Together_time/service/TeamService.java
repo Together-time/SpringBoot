@@ -24,6 +24,7 @@ public class TeamService {
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
     private final ProjectDtoService projectDtoService;
+    private final OnlineStatusService onlineStatusService;
 
     public List<ProjectDto> getProjects(String loggedEmail) {
         List<Project> projectList = teamRepository.findProjectsByMemberEmail(loggedEmail);
@@ -82,7 +83,7 @@ public class TeamService {
         }
     }
 
-    public List<Member> findByProjectId(Long projectId) {
+    public List<MemberDto> findByProjectId(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
 
@@ -90,14 +91,25 @@ public class TeamService {
 
         List<Member> members = teamList.stream().map(Team::getMember).collect(Collectors.toList());
 
-        return members;
+        List<MemberDto> memberDtos = members.stream().map(member -> {
+            //String redisKey = "MEMBER_ONLINE"+member.getEmail();
+            //Boolean isOnline = Boolean.TRUE.equals(redisDao.getValues(redisKey));
+            boolean isOnline = onlineStatusService.isOnline(member.getEmail());
+            return new MemberDto(
+                    member.getNickname(),
+                    member.getEmail(),
+                    "",
+                    isOnline);
+        }).collect(Collectors.toList());
+
+        return memberDtos;
     }
 
     public void updateTeam(Project project, List<Member> members) {
-        List<Member> originMembers = findByProjectId(project.getId());
+        List<MemberDto> originMembers = findByProjectId(project.getId());
         //팀원 내보내기 기능이 없으므로 추가만 하면 된다
         for(Member member : members){
-            if(originMembers.contains(member))
+            if(originMembers.equals(member.getEmail()))
                 continue;
             addTeamByCreateProject(member, project);
         }

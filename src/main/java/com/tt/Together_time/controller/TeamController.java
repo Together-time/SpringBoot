@@ -12,6 +12,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,10 +41,10 @@ public class TeamController {
     
     //현재 프로젝트에 참여 중인 팀원 목록
     @GetMapping("/{projectId}")
-    public ResponseEntity<List<Member>> getMembers(@PathVariable Long projectId){
+    public ResponseEntity<List<MemberDto>> getMembers(@PathVariable Long projectId){
         try{
-            List<Member> members = teamService.findByProjectId(projectId);
-            return ResponseEntity.ok(members);
+            List<MemberDto> memberDtos = teamService.findByProjectId(projectId);
+            return ResponseEntity.ok(memberDtos);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException e) {

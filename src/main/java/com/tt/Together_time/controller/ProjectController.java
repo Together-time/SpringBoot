@@ -2,6 +2,7 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
+import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.service.ProjectService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -111,4 +112,18 @@ public class ProjectController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
         }
     }
+    /*
+    //정렬
+    @GetMapping
+    public ResponseEntity<List<Project>> sortProjects(@RequestParam String keyword){
+        //정렬 기준에 따른 정렬 - 조회순, 생성순
+    }
+    */
+    @GetMapping("/search")
+    public ResponseEntity<List<Project>> searchProjects(@RequestParam String keyword){
+        List<Project> projectList = projectService.findProjectsByKeyword(keyword);
+        return ResponseEntity.ok(projectList);
+    }
+
+
 }

@@ -12,7 +12,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -44,6 +43,8 @@ public class MemberService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(member.getEmail());   //Refresh Token 발급
 
         redisDao.setValues(member.getEmail(), refreshToken, Duration.ofDays(15));
+        //redisDao.setValues("MEMBER_ONLINE"+email, "logged");    //연결 상태 관리
+
         // Refresh Token을 HTTP-Only 쿠키에 저장
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);  // JavaScript에서 접근하지 못하도록 설정
@@ -54,7 +55,8 @@ public class MemberService {
         return new MemberDto(
                 member.getNickname(),
                 member.getEmail(),
-                accessToken
+                accessToken,
+                true
         );
     }
 
@@ -80,6 +82,7 @@ public class MemberService {
         if (refreshToken != null) {
             String email = jwtTokenProvider.getEmailFromToken(refreshToken);
             redisDao.deleteValues(email);
+            //redisDao.deleteValues("MEMBER_ONLINE"+email);
         }
         // 클라이언트의 Refresh Token 쿠키 삭제
         Cookie cookie = new Cookie("refreshToken", null);
@@ -114,4 +117,27 @@ public class MemberService {
         throw new InvalidRefreshTokenException("Invalid Refresh Token");
     }
 
+    public void withdraw(HttpServletRequest request) {
+        String accessToken = jwtAuthenticationFilter.resolveToken(request);
+        if(accessToken!=null){
+            Long expiration = jwtTokenProvider.getExpiration(accessToken);
+            redisDao.addToBlacklist(accessToken, expiration);
+        }
+        String refreshToken = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
+        if(refreshToken!=null){
+            String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+            redisDao.deleteValues(email);
+            memberRepository.deleteByEmail(email);
+        }
+
+        Cookie cookie = new Cookie("refreshToken", null);
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        request.setAttribute("exception", null);
+    }
 }
