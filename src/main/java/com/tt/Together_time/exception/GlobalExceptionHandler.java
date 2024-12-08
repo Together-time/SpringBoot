@@ -11,4 +11,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleInvalidRefreshTokenException(InvalidRefreshTokenException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Refresh Token: " + ex.getMessage());
     }
+
+    @ExceptionHandler(BlacklistedTokenException.class)
+    public ResponseEntity<String> handleBlacklistedTokenException(BlacklistedTokenException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
 }

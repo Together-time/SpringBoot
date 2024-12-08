@@ -1,5 +1,6 @@
 package com.tt.Together_time.config;
 
+import com.tt.Together_time.repository.RedisDao;
 import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+    private final RedisDao redisDao;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
@@ -37,6 +38,6 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider);
+        return new JwtAuthenticationFilter(jwtTokenProvider, redisDao);
     }
 }

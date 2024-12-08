@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Modifying
@@ -16,4 +18,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Modifying
     @Query("UPDATE Project p SET p.status = :visibility WHERE p.id = :projectId")
     void updateProjectStatus(Long projectId, ProjectVisibility visibility);
+
+    @Query("SELECT p FROM Project p WHERE p.title LIKE %:keyword%")
+    List<Project> findByKeyword(String keyword);
 }

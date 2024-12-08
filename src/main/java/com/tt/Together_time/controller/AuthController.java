@@ -2,11 +2,7 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
-import com.tt.Together_time.exception.InvalidRefreshTokenException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
-import com.tt.Together_time.repository.RedisDao;
-import com.tt.Together_time.security.JwtTokenProvider;
 import com.tt.Together_time.service.KakaoOAuth2UserService;
 import com.tt.Together_time.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,8 +22,6 @@ public class AuthController {
 
     private final MemberService memberService;
     private final KakaoOAuth2UserService kakaoService; // 카카오 서비스: 토큰으로 사용자 정보 조회
-    private final JwtTokenProvider jwtTokenProvider;
-    private final RedisDao redisDao;
 
     @GetMapping("/user")
     public ResponseEntity<String> getUserInfo() {
@@ -43,9 +37,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public void logout(){
-        String email = getUserInfo().getBody();
-        memberService.logout(email);
+    public ResponseEntity<Boolean> logout(HttpServletRequest request, HttpServletResponse response){
+        memberService.logout(request, response);
+        return ResponseEntity.ok(true);
     }
 
     @PostMapping("/kakao")
@@ -56,24 +50,14 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
-        // 쿠키에서 Refresh Token 추출
-        String refreshToken = Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
+    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request) {
+         String newAccessToken = memberService.refreshAccessToken(request);
+         return ResponseEntity.ok(newAccessToken);
+    }
 
-        // Refresh Token 검증 및 Access Token 발급
-        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-        String storedRefreshToken = redisDao.getValues(email);
-
-        //System.out.println("refresh token : "+storedRefreshToken);
-
-        if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
-            String newAccessToken = jwtTokenProvider.generateToken(email);
-            return ResponseEntity.ok(newAccessToken);
-        }
-        throw new InvalidRefreshTokenException("Invalid Refresh Token");
+    @DeleteMapping
+    public ResponseEntity<Boolean> withdraw(HttpServletRequest request){
+        memberService.withdraw(request);
+        return ResponseEntity.ok(true);
     }
 }
