@@ -18,7 +18,4 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Modifying
     @Query("UPDATE Project p SET p.status = :visibility WHERE p.id = :projectId")
     void updateProjectStatus(Long projectId, ProjectVisibility visibility);
-
-    @Query("SELECT p FROM Project p WHERE p.title LIKE %:keyword%")
-    List<Project> findByKeyword(String keyword);
 }

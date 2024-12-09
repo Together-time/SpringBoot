@@ -13,9 +13,11 @@ import com.tt.Together_time.repository.RedisDao;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,17 +35,13 @@ public class ProjectService {
         return projectMongoRepository.findByProjectId(projectId);
     }
 
-    public List<ProjectDocument> findProjectsByTag(String tag){
-        return projectMongoRepository.findByTagsContaining(tag);
-    }
-
     public void updateProjectTags(String logged, Long projectId, List<String> tags) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
         boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember)
-            projectMongoRepository.replaceTags(projectId, tags);
+            projectMongoRepository.replaceTags(projectId, project.getTitle(), tags);
         else
             throw new AccessDeniedException("권한이 없습니다.");
     }
@@ -68,6 +66,7 @@ public class ProjectService {
                 Project.builder()
                         .title(projectCommand.getTitle())
                         .status(ProjectVisibility.PUBLIC)
+                        .views(0L)
                         .build()
         );
 
@@ -75,7 +74,14 @@ public class ProjectService {
             teamService.addTeamByCreateProject(member, project);
         }
 
-        ProjectDocument projectDocument = new ProjectDocument(null, project.getId(), projectCommand.getTags());
+        ProjectDocument projectDocument = new ProjectDocument(
+                null,
+                project.getId(),
+                project.getTitle(),
+                projectCommand.getTags(),
+                0L,
+                LocalDateTime.now()
+                );
         projectMongoRepository.save(projectDocument);
     }
 
@@ -88,10 +94,10 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
         if(project != null) {
-            if(!project.getTitle().equals(title))
+            if (!project.getTitle().equals(title))
                 projectRepository.updateProject(project.getId(), title);
             teamService.updateTeam(project, members);
-            projectMongoRepository.replaceTags(project.getId(), tags);
+            projectMongoRepository.replaceTags(project.getId(), title, tags);
         }
     }
 
@@ -122,16 +128,11 @@ public class ProjectService {
             throw new AccessDeniedException("권한이 없습니다.");
     }
 
-    public List<Project> findProjectsByKeyword(String keyword) {
-        List<Project> projects = projectRepository.findByKeyword(keyword);
+    public List<ProjectDocument> findProjectsByKeyword(String keyword) {
+        Sort sortByCreatedAt = Sort.by(Sort.Direction.DESC, "createdAt");
+        List<ProjectDocument> projectsBytags = projectMongoRepository.searchByTitleOrTags(keyword, sortByCreatedAt);
 
-        List<ProjectDocument> projectsBytags = findProjectsByTag(keyword);
-
-        for(ProjectDocument pd : projectsBytags){
-            projects.add(projectRepository.findById(pd.getProjectId()).get());
-        }
-
-        return projects;
+        return projectsBytags;
     }
 
     //조회수

@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(collection = "projects")
@@ -17,6 +18,8 @@ public class ProjectDocument {
     private String id;
 
     private Long projectId;
-
+    private String title;
     private List<String> tags;
+    private Long views;
+    private LocalDateTime createdAt;
 }

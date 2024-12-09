@@ -2,6 +2,7 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
+import com.tt.Together_time.domain.mongodb.ProjectDocument;
 import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.service.ProjectService;
 import jakarta.persistence.EntityNotFoundException;
@@ -120,10 +121,8 @@ public class ProjectController {
     }
     */
     @GetMapping("/search")
-    public ResponseEntity<List<Project>> searchProjects(@RequestParam String keyword){
-        List<Project> projectList = projectService.findProjectsByKeyword(keyword);
+    public ResponseEntity<List<ProjectDocument>> searchProjects(@RequestParam String keyword){
+        List<ProjectDocument> projectList = projectService.findProjectsByKeyword(keyword);
         return ResponseEntity.ok(projectList);
     }
-
-
 }
