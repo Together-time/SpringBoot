@@ -1,6 +1,7 @@
 package com.tt.Together_time.repository;
 
 import com.tt.Together_time.domain.mongodb.ProjectDocument;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
@@ -11,7 +12,7 @@ import java.util.Optional;
 
 public interface ProjectMongoRepository extends MongoRepository<ProjectDocument, String> {
     @Query("{ $or: [ { 'title': { $regex: ?0, $options: 'i' } }, { 'tags': { $regex: ?0, $options: 'i' } } ] }")
-    List<ProjectDocument> searchByTitleOrTags(String keyword);
+    List<ProjectDocument> searchByTitleOrTags(String keyword, Sort sort);
 
     Optional<ProjectDocument> findByProjectId(Long projectId);
 

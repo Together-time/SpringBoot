@@ -13,6 +13,7 @@ import com.tt.Together_time.repository.RedisDao;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -128,7 +129,8 @@ public class ProjectService {
     }
 
     public List<ProjectDocument> findProjectsByKeyword(String keyword) {
-        List<ProjectDocument> projectsBytags = projectMongoRepository.searchByTitleOrTags(keyword);
+        Sort sortByCreatedAt = Sort.by(Sort.Direction.DESC, "createdAt");
+        List<ProjectDocument> projectsBytags = projectMongoRepository.searchByTitleOrTags(keyword, sortByCreatedAt);
 
         return projectsBytags;
     }
