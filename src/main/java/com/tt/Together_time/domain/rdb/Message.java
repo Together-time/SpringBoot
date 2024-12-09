@@ -30,7 +30,6 @@ public class Message {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id")
-    private Member sender;
+    @Column(nullable = false)
+    private String sender;
 }
