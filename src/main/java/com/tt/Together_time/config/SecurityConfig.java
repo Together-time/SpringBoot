@@ -3,6 +3,7 @@ package com.tt.Together_time.config;
 import com.tt.Together_time.repository.RedisDao;
 import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
+import com.tt.Together_time.service.KakaoOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final KakaoOAuth2UserService kakaoOAuth2UserService;
     private final RedisDao redisDao;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -27,7 +29,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .anyRequest().authenticated()
-                ).addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl("/api/auth/kakao/callback", true)
+                );
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
