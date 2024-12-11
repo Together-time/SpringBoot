@@ -1,6 +1,5 @@
 package com.tt.Together_time.service;
 
-import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
 import com.tt.Together_time.domain.enums.ProjectVisibility;
@@ -51,9 +50,6 @@ public class ProjectService {
                 .orElseThrow(()-> new EntityNotFoundException());
 
         ProjectDto projectDto = projectDtoService.convertToDto(project);
-
-        //조회수 증가
-
         ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
         projectDto.setTags(projectDocument.getTags());
 
@@ -138,7 +134,6 @@ public class ProjectService {
     //조회수
     @Transactional
     public Long viewProject(String logged, Long projectId){
-        //같은 사용자에 대해 조회수가 1회만 증가하도록 함
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
 
@@ -158,4 +153,10 @@ public class ProjectService {
         }
         return views;
     }
+    
+    //Redis에서 모든 조회수 가져오기
+    
+    //특정 프로젝트의 조회수
+    
+    //특정 프로젝트 조회수 증가
 }

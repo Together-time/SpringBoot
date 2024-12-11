@@ -41,7 +41,9 @@ public class AuthController {
     }
 
     @PostMapping("/kakao")
-    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("accessToken") String accessToken, HttpServletResponse response) {
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) {
+        // Authorization Code로 Kakao Access Token 요청
+        String accessToken = kakaoService.getAccessTokenByCode(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
         return ResponseEntity.ok(memberDto);
