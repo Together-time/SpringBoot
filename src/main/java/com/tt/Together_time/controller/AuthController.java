@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
@@ -41,7 +43,8 @@ public class AuthController {
     }
 
     @PostMapping("/kakao/callback")
-    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) {
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
+        String code = request.get("code");
         String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
