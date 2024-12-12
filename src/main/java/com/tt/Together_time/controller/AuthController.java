@@ -40,8 +40,9 @@ public class AuthController {
         return ResponseEntity.ok(true);
     }
 
-    @PostMapping("/kakao")
-    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("accessToken") String accessToken, HttpServletResponse response) {
+    @PostMapping("/kakao/callback")
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) {
+        String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
         return ResponseEntity.ok(memberDto);

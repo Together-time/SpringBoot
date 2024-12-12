@@ -16,12 +16,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class KakaoOAuth2UserService {
+    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+    private String CLIENT_ID;
+    @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")
+    private String TOKEN_REQUEST_URL;
+    @Value("${spring.security.oauth2.client.registration.kakao.redirect-uri}")
+    private String REDIRECT_URI;
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-uri}")
-    private String KAKAO_USERINFO_REQUEST_URL;
-
-    private final AuthRepository authRepository;
+    private String USER_INFO_REQUEST_URL;
 
     public KakaoUserInfo getUserInfo(String kakaoToken) {
         RestTemplate restTemplate = new RestTemplate();
@@ -32,7 +35,7 @@ public class KakaoOAuth2UserService {
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(
-                KAKAO_USERINFO_REQUEST_URL, HttpMethod.GET, request, String.class);
+                USER_INFO_REQUEST_URL, HttpMethod.GET, request, String.class);
 
         //System.out.println("카카오 API 응답: " + response.getBody());
 
@@ -41,6 +44,33 @@ public class KakaoOAuth2UserService {
             return objectMapper.readValue(response.getBody(), KakaoUserInfo.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("카카오 사용자 정보 파싱 실패", e);
+        }
+    }
+
+    public String getAccessToken(String code) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", CLIENT_ID);
+        params.add("redirect_uri", REDIRECT_URI);
+        params.add("code", code);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+        ResponseEntity<String> response = restTemplate.exchange(
+                TOKEN_REQUEST_URL, HttpMethod.POST, request, String.class
+        );
+
+        // 액세스 토큰 파싱
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return jsonNode.get("access_token").asText();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("액세스 토큰 파싱 실패", e);
         }
     }
 }
