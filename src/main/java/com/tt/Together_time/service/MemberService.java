@@ -38,7 +38,7 @@ public class MemberService {
                             .build();
                     return memberRepository.save(newMember);
                 });
-        String accessToken = jwtTokenProvider.generateToken(member.getEmail());   //JWT Access Token 발급
+        String jwtToken = jwtTokenProvider.generateToken(member.getEmail());   //JWT Access Token 발급
         String refreshToken = jwtTokenProvider.generateRefreshToken(member.getEmail());   //Refresh Token 발급
         redisDao.setValues(member.getEmail(), refreshToken, Duration.ofDays(15));
         //redisDao.setValues("MEMBER_ONLINE"+email, "logged");    //연결 상태 관리
@@ -53,7 +53,7 @@ public class MemberService {
         return new MemberDto(
                 member.getNickname(),
                 member.getEmail(),
-                accessToken,
+                jwtToken,
                 true
         );
     }
