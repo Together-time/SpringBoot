@@ -30,7 +30,6 @@ public class MemberService {
     public MemberDto kakaoLogin(KakaoUserInfo kakaoUserInfo, HttpServletResponse response){
         String email = kakaoUserInfo.getKakao_account().getEmail();
         String nickname = kakaoUserInfo.getKakao_account().getProfile().getNickname();
-
         Member member = memberRepository.findByEmail(email)
                 .orElseGet(()->{
                     Member newMember = Member.builder()
@@ -41,7 +40,6 @@ public class MemberService {
                 });
         String accessToken = jwtTokenProvider.generateToken(member.getEmail());   //JWT Access Token 발급
         String refreshToken = jwtTokenProvider.generateRefreshToken(member.getEmail());   //Refresh Token 발급
-
         redisDao.setValues(member.getEmail(), refreshToken, Duration.ofDays(15));
         //redisDao.setValues("MEMBER_ONLINE"+email, "logged");    //연결 상태 관리
 

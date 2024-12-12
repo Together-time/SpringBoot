@@ -42,9 +42,8 @@ public class AuthController {
         return ResponseEntity.ok(true);
     }
 
-    @PostMapping("/kakao/callback")
-    public ResponseEntity<MemberDto> kakaoLogin(@RequestBody Map<String, String> request, HttpServletResponse response) {
-        String code = request.get("code");
+    @GetMapping("/kakao/callback")
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) {
         String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);

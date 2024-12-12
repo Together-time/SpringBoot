@@ -2,18 +2,15 @@ package com.tt.Together_time.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
-import com.tt.Together_time.domain.rdb.Member;
-import com.tt.Together_time.repository.AuthRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Optional;
 
 @Service
 public class KakaoOAuth2UserService {
@@ -60,17 +57,29 @@ public class KakaoOAuth2UserService {
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-        ResponseEntity<String> response = restTemplate.exchange(
-                TOKEN_REQUEST_URL, HttpMethod.POST, request, String.class
-        );
 
         // 액세스 토큰 파싱
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            return jsonNode.get("access_token").asText();
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("액세스 토큰 파싱 실패", e);
+            // 카카오 토큰 요청 API 호출
+            ResponseEntity<String> response = restTemplate.exchange(
+                    TOKEN_REQUEST_URL, HttpMethod.POST, request, String.class
+            );
+            // 응답 파싱
+            if (response.getStatusCode().is2xxSuccessful()) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                JsonNode jsonNode = objectMapper.readTree(response.getBody());
+                return jsonNode.get("access_token").asText();
+            } else {
+                // 오류 응답 처리
+                throw new RuntimeException("카카오 서버 응답 오류: " + response.getStatusCode() + ", " + response.getBody());
+            }
+        } catch (HttpClientErrorException e) {
+            // HTTP 클라이언트 오류 처리 (예: 4xx 오류)
+            throw e;
+        } catch (Exception e) {
+            // 기타 오류 처리
+            e.printStackTrace();
+            throw new RuntimeException("액세스 토큰 요청 중 예외 발생", e);
         }
     }
 }
