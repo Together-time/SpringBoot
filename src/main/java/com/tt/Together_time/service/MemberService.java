@@ -26,7 +26,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RedisDao redisDao;
-    /*
+
     public MemberDto kakaoLogin(KakaoUserInfo kakaoUserInfo, HttpServletResponse response){
         String email = kakaoUserInfo.getKakao_account().getEmail();
         String nickname = kakaoUserInfo.getKakao_account().getProfile().getNickname();
@@ -59,7 +59,7 @@ public class MemberService {
                 true
         );
     }
-    */
+
     public Optional<Member> findByEmail(String email){
         return memberRepository.findByEmail(email);
     }

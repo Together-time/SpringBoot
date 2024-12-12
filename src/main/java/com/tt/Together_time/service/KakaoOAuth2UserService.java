@@ -28,7 +28,7 @@ public class KakaoOAuth2UserService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + kakaoToken);
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 
         HttpEntity<Void> request = new HttpEntity<>(headers);
         ResponseEntity<String> response = restTemplate.exchange(
@@ -36,15 +36,9 @@ public class KakaoOAuth2UserService {
 
         //System.out.println("카카오 API 응답: " + response.getBody());
 
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
-
-            Long id = jsonNode.get("id").asLong();
-            String email = jsonNode.path("kakao_account").path("email").asText();
-            String nickname = jsonNode.path("kakao_account").path("profile").path("nickname").asText();
-
-            return new KakaoUserInfo(id, email, nickname);
+            return objectMapper.readValue(response.getBody(), KakaoUserInfo.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("카카오 사용자 정보 파싱 실패", e);
         }
