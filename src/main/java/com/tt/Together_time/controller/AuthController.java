@@ -13,7 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,10 +43,11 @@ public class AuthController {
     }
 
     @GetMapping("/kakao/callback")
-    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) {
+    public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
         String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
+        response.sendRedirect("http://localhost:3000?token=" + memberDto.getJwtToken());
         return ResponseEntity.ok(memberDto);
     }
 
