@@ -24,8 +24,10 @@ public class ProjectController {
     //특정 프로젝트 정보 읽어오기
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDto> getProject(@PathVariable Long projectId){
+        String loggedInMember = authController.getUserInfo().getBody();
+
         try{
-            ProjectDto projectDto = projectService.getProject(projectId);
+            ProjectDto projectDto = projectService.getProject(projectId, loggedInMember);
             return ResponseEntity.ok().body(projectDto);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

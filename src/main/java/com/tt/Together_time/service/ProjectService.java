@@ -45,13 +45,18 @@ public class ProjectService {
             throw new AccessDeniedException("권한이 없습니다.");
     }
     
-    public ProjectDto getProject(Long projectId){
+    public ProjectDto getProject(Long projectId, String logged){
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()-> new EntityNotFoundException());
-
         ProjectDto projectDto = projectDtoService.convertToDto(project);
         ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
         projectDto.setTags(projectDocument.getTags());
+
+
+        if(!teamService.existsByProjectIdAndMemberEmail(projectId, logged)){    //조회수 증가
+            Long views = viewProject(project, logged);
+            projectDto.setViews(views);
+        }
 
         return projectDto;
     }
@@ -133,11 +138,8 @@ public class ProjectService {
 
     //조회수
     @Transactional
-    public Long viewProject(String logged, Long projectId){
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
-
-        String redisKey = "views:"+String.valueOf(projectId);
+    public Long viewProject(Project project, String logged){
+        String redisKey = "views:"+String.valueOf(project.getId());
         String values = redisDao.getValues(redisKey);
         if(values==null || values.equals("0")){
             values = project.getViews()>0? String.valueOf(project.getViews()):String.valueOf(0);
@@ -155,8 +157,4 @@ public class ProjectService {
     }
     
     //Redis에서 모든 조회수 가져오기
-    
-    //특정 프로젝트의 조회수
-    
-    //특정 프로젝트 조회수 증가
 }
