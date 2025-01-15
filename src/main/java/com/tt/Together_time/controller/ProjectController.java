@@ -3,7 +3,6 @@ package com.tt.Together_time.controller;
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
 import com.tt.Together_time.domain.mongodb.ProjectDocument;
-import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.service.ProjectService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +37,18 @@ public class ProjectController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<ProjectDocument>> searchProjects(@RequestParam String keyword){
+        List<ProjectDocument> projectList = projectService.findProjectsByKeyword(keyword);
+        return ResponseEntity.ok(projectList);
+    }
+
     @PostMapping
     public ResponseEntity<Boolean> addProject(@RequestBody ProjectCommand projectCommand) {
+        String loggedInMember = authController.getUserInfo().getBody();
+
         try {
-            projectService.addProject(projectCommand);
+            projectService.addProject(projectCommand, loggedInMember);
             return ResponseEntity.ok().body(true);
         } catch (EntityNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
@@ -122,9 +129,4 @@ public class ProjectController {
         //정렬 기준에 따른 정렬 - 조회순, 생성순
     }
     */
-    @GetMapping("/search")
-    public ResponseEntity<List<ProjectDocument>> searchProjects(@RequestParam String keyword){
-        List<ProjectDocument> projectList = projectService.findProjectsByKeyword(keyword);
-        return ResponseEntity.ok(projectList);
-    }
 }

@@ -46,4 +46,7 @@ public class RedisDao {
     public void addToBlacklist(String token, long expiration){
         redisTemplate.opsForValue().set(token, "blacklisted", Duration.ofMillis(expiration));
     }
+    public void publishMessage(String channel, String message) {
+        redisTemplate.convertAndSend(channel, message);
+    }
 }

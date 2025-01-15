@@ -25,8 +25,9 @@ import java.util.Optional;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMongoRepository projectMongoRepository;
-    private final TeamService teamService;
     private final ProjectDtoService projectDtoService;
+    private final TeamService teamService;
+    private final MemberService memberService;
     private final RedisDao redisDao;
 
 
@@ -62,7 +63,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void addProject(ProjectCommand projectCommand) {
+    public void addProject(ProjectCommand projectCommand, String logged) {
         Project project = projectRepository.save(
                 Project.builder()
                         .title(projectCommand.getTitle())
@@ -70,6 +71,11 @@ public class ProjectService {
                         .views(0L)
                         .build()
         );
+
+        Member generatedMember = memberService.findByEmail(logged)
+                .orElseThrow(()-> new EntityNotFoundException());
+
+        teamService.addTeamByCreateProject(generatedMember, project);
 
         for(Member member : projectCommand.getMembers()) {
             teamService.addTeamByCreateProject(member, project);

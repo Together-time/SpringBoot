@@ -23,7 +23,6 @@ import java.util.Arrays;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final KakaoOAuth2UserService kakaoOAuth2UserService;
     private final RedisDao redisDao;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -31,6 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf->csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 활성화
                 .authorizeHttpRequests(auth -> auth
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .anyRequest().authenticated()
