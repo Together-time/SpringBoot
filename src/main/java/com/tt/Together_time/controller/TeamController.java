@@ -2,7 +2,7 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.dto.ProjectDto;
-import com.tt.Together_time.domain.rdb.Member;
+import com.tt.Together_time.domain.dto.TeamCommand;
 import com.tt.Together_time.service.TeamService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,12 +54,12 @@ public class TeamController {
     }
 
     @PostMapping    //팀원 추가
-    public ResponseEntity<Boolean> addTeam(@RequestParam Member member, @RequestParam Long projectId){
+    public ResponseEntity<Boolean> addTeam(@RequestBody TeamCommand teamCommand){
         String loggedInMember = authController.getUserInfo().getBody();
 
         if(loggedInMember!=null){
             try {
-                teamService.addTeam(loggedInMember, member, projectId);
+                teamService.addTeam(loggedInMember, teamCommand.getMember(), teamCommand.getProjectId());
                 return ResponseEntity.ok(true);
             } catch (EntityNotFoundException e){
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
