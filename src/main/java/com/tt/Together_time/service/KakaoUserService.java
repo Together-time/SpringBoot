@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class KakaoOAuth2UserService {
+public class KakaoUserService {
     @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
     private String CLIENT_ID;
     @Value("${spring.security.oauth2.client.provider.kakao.token-uri}")

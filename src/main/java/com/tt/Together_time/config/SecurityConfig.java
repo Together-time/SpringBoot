@@ -3,7 +3,6 @@ package com.tt.Together_time.config;
 import com.tt.Together_time.repository.RedisDao;
 import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
-import com.tt.Together_time.service.KakaoOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

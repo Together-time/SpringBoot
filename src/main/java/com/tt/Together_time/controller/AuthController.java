@@ -3,7 +3,7 @@ package com.tt.Together_time.controller;
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
 import jakarta.servlet.http.HttpServletResponse;
-import com.tt.Together_time.service.KakaoOAuth2UserService;
+import com.tt.Together_time.service.KakaoUserService;
 import com.tt.Together_time.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.io.IOException;
 public class AuthController {
 
     private final MemberService memberService;
-    private final KakaoOAuth2UserService kakaoService; // 카카오 서비스: 토큰으로 사용자 정보 조회
+    private final KakaoUserService kakaoService; // 카카오 서비스: 토큰으로 사용자 정보 조회
 
     @GetMapping("/user")
     public ResponseEntity<String> getUserInfo() {
