@@ -160,6 +160,6 @@ public class ProjectService {
 
 
     public Project findById(Long projectId){
-        return projectRepository.findById(projectId).orElseThrow(()->new EntityNotFoundException());
+        return projectRepository.findById(projectId).orElseThrow(()->new EntityNotFoundException("해당 프로젝트는 존재하지 않습니다."));
     }
 }

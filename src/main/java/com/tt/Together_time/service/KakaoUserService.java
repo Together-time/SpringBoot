@@ -70,12 +70,10 @@ public class KakaoUserService {
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
                 return jsonNode.get("access_token").asText();
             } else {
-                // 오류 응답 처리
                 throw new RuntimeException("카카오 서버 응답 오류: " + response.getStatusCode() + ", " + response.getBody());
             }
         } catch (HttpClientErrorException e) {
-            // HTTP 클라이언트 오류 처리 (예: 4xx 오류)
-            throw e;
+            throw e;    // HTTP 클라이언트 오류 처리 (예: 4xx 오류)
         } catch (Exception e) {
             // 기타 오류 처리
             e.printStackTrace();

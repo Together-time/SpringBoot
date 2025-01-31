@@ -7,10 +7,7 @@ import com.tt.Together_time.service.KakaoUserService;
 import com.tt.Together_time.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -25,14 +22,7 @@ public class AuthController {
 
     @GetMapping("/user")
     public ResponseEntity<String> getUserInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        String email = authentication.getName();
-
+        String email = memberService.getUserEmail();
         return ResponseEntity.ok(email);
     }
 
