@@ -12,6 +12,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -66,9 +71,9 @@ public class MemberService {
         return memberRepository.findMember(keyword);
     }
 
-    public Optional<Member> findById(Long memberId) {
+    /*public Optional<Member> findById(Long memberId) {
         return memberRepository.findById(memberId);
-    }
+    }*/
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         // 쿠키에서 Refresh Token 추출
@@ -80,7 +85,6 @@ public class MemberService {
         if (refreshToken != null) {
             String email = jwtTokenProvider.getEmailFromToken(refreshToken);
             redisDao.deleteValues(email);
-            //redisDao.deleteValues("MEMBER_ONLINE"+email);
         }
         // 클라이언트의 Refresh Token 쿠키 삭제
         Cookie cookie = new Cookie("refreshToken", null);
@@ -137,5 +141,15 @@ public class MemberService {
         cookie.setMaxAge(0);
         cookie.setPath("/");
         request.setAttribute("exception", null);
+    }
+
+    public String getUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
+            throw new AuthenticationCredentialsNotFoundException("로그인이 필요합니다.");
+        }
+
+        return authentication.getName();
     }
 }

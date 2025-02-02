@@ -15,8 +15,7 @@ public class RedisDao {
     private final RedisTemplate<String, String> redisTemplate;
 
     public void setValues(String key, String data) {
-        ValueOperations<String, String> values = redisTemplate.opsForValue();
-        values.set(key, data);
+        redisTemplate.opsForValue().set(key, data);
     }
 
     public void setValuesList(String key, String data) {

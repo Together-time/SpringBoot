@@ -3,12 +3,10 @@ package com.tt.Together_time.controller;
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
 import com.tt.Together_time.domain.mongodb.ProjectDocument;
+import com.tt.Together_time.service.MemberService;
 import com.tt.Together_time.service.ProjectService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,26 +15,18 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/projects")
 public class ProjectController {
-    private final AuthController authController;
     private final ProjectService projectService;
+    private final MemberService memberService;
 
     //특정 프로젝트 정보 읽어오기
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDto> getProject(@PathVariable Long projectId){
-        String loggedInMember = authController.getUserInfo().getBody();
-
-        try{
-            ProjectDto projectDto = projectService.getProject(projectId, loggedInMember);
-            return ResponseEntity.ok().body(projectDto);
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        String loggedInMember = memberService.getUserEmail();
+        ProjectDto projectDto = projectService.getProject(projectId, loggedInMember);
+        return ResponseEntity.ok().body(projectDto);
     }
 
+    //정렬 기준에 따른 정렬 추가할 것 - 조회순, 생성순
     @GetMapping("/search")
     public ResponseEntity<List<ProjectDocument>> searchProjects(@RequestParam String keyword){
         List<ProjectDocument> projectList = projectService.findProjectsByKeyword(keyword);
@@ -45,88 +35,42 @@ public class ProjectController {
 
     @PostMapping
     public ResponseEntity<Boolean> addProject(@RequestBody ProjectCommand projectCommand) {
-        String loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = memberService.getUserEmail();
 
-        try {
-            projectService.addProject(projectCommand, loggedInMember);
-            return ResponseEntity.ok().body(true);
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-        }
+        projectService.addProject(projectCommand, loggedInMember);
+        return ResponseEntity.ok().body(true);
     }
 
     @PutMapping("/{projectId}")
     public ResponseEntity<Boolean> updateProject(@PathVariable Long projectId, @RequestBody ProjectCommand projectCommand){
-        try{
-            projectService.updateProject(projectId, projectCommand);
-            return ResponseEntity.ok().body(true);
-        } catch (IllegalArgumentException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(false);
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        } catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-        }
+        projectService.updateProject(projectId, projectCommand);
+        return ResponseEntity.ok().body(true);
     }
     
     //태그 편집
     @PutMapping("/{projectId}/tag")
     public ResponseEntity<Boolean> updateProjectTags(@PathVariable Long projectId, @RequestParam List<String> tags){
-        String loggedInMember = authController.getUserInfo().getBody();
-        try{
-            projectService.updateProjectTags(loggedInMember, projectId, tags);
-            return ResponseEntity.ok(true);
-        }catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        }catch (AccessDeniedException e){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-        }
+        String loggedInMember = memberService.getUserEmail();
+
+        projectService.updateProjectTags(loggedInMember, projectId, tags);
+        return ResponseEntity.ok(true);
     }
 
     @PatchMapping("/{projectId}/visibility")
     public ResponseEntity<Boolean> updateProjectStatus(@PathVariable Long projectId){
-        String loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = memberService.getUserEmail();
 
-        try{
-            projectService.updateProjectStatus(loggedInMember, projectId);
-            return ResponseEntity.ok().body(true);
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        } catch (AccessDeniedException e){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
-        } catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-        }
+        projectService.updateProjectStatus(loggedInMember, projectId);
+        return ResponseEntity.ok().body(true);
     }
 
 
 
     @DeleteMapping("{projectId}")
     public ResponseEntity<Boolean> removeProject(@PathVariable Long projectId){
-        String loggedInMember = authController.getUserInfo().getBody();
+        String loggedInMember = memberService.getUserEmail();
 
-        try{
-            projectService.deleteById(loggedInMember, projectId);
-            return ResponseEntity.ok().body(true);
-        } catch (EntityNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(false);
-        } catch (AccessDeniedException e){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
-        } catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
-        }
+        projectService.deleteById(loggedInMember, projectId);
+        return ResponseEntity.ok().body(true);
     }
-    /*
-    //정렬
-    @GetMapping
-    public ResponseEntity<List<Project>> sortProjects(@RequestParam String keyword){
-        //정렬 기준에 따른 정렬 - 조회순, 생성순
-    }
-    */
 }

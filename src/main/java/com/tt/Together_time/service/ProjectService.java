@@ -30,14 +30,12 @@ public class ProjectService {
     private final MemberService memberService;
     private final RedisDao redisDao;
 
-
     public Optional<ProjectDocument> findTagsByProjectId(Long projectId){
         return projectMongoRepository.findByProjectId(projectId);
     }
 
     public void updateProjectTags(String logged, Long projectId, List<String> tags) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Project project = findById(projectId);
         boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember)
@@ -47,8 +45,7 @@ public class ProjectService {
     }
     
     public ProjectDto getProject(Long projectId, String logged){
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Project project = findById(projectId);
         ProjectDto projectDto = projectDtoService.convertToDto(project);
         ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
         projectDto.setTags(projectDocument.getTags());
@@ -98,8 +95,7 @@ public class ProjectService {
         List<Member> members = projectCommand.getMembers();
         List<String> tags = projectCommand.getTags();
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Project project = findById(projectId);
         if(project != null) {
             if (!project.getTitle().equals(title))
                 projectRepository.updateProject(project.getId(), title);
@@ -109,8 +105,7 @@ public class ProjectService {
     }
 
     public void updateProjectStatus(String logged, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Project project = findById(projectId);
 
         boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
@@ -124,10 +119,9 @@ public class ProjectService {
     }
 
     public void deleteById(String logged, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Project project = findById(projectId);
 
-        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
+        boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember){
             projectRepository.deleteById(projectId);
@@ -163,4 +157,9 @@ public class ProjectService {
     }
     
     //Redis에서 모든 조회수 가져오기
+
+
+    public Project findById(Long projectId){
+        return projectRepository.findById(projectId).orElseThrow(()->new EntityNotFoundException("해당 프로젝트는 존재하지 않습니다."));
+    }
 }
