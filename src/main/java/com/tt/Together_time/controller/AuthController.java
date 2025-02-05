@@ -2,7 +2,6 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
-import com.tt.Together_time.domain.rdb.Member;
 import jakarta.servlet.http.HttpServletResponse;
 import com.tt.Together_time.service.KakaoUserService;
 import com.tt.Together_time.service.MemberService;
@@ -13,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +34,15 @@ public class AuthController {
     }
 
     @GetMapping("/kakao/callback")
+    public void kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
+        String accessToken = kakaoService.getAccessToken(code);
+        KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
+        MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
+        response.sendRedirect("http://localhost:3000?token=" + memberDto.getJwtToken());
+        //return ResponseEntity.ok(memberDto);
+    }
+    //http 헤더
+    /*@GetMapping("/kakao/callback")
     public ResponseEntity<MemberDto> kakaoLogin(@RequestParam("code") String code, HttpServletResponse response) throws IOException {
         String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
@@ -44,7 +51,9 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberDto.getJwtToken())
                 .body(memberDto);
-    }
+    }*/
+
+    // HttpOnly & Secure 쿠키 사용으로 바꾸기 -> 회의 안건
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급
     public ResponseEntity<String> refreshAccessToken(HttpServletRequest request) {
