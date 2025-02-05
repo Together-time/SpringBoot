@@ -13,4 +13,6 @@ public interface ChatMongoRepository extends MongoRepository<ChatDocument, Strin
     long countByProjectIdAndUnreadByContains(String projectId, String logged);
 
     List<ChatDocument> findByProjectIdAndUnreadByContains(String projectId, String logged);
+
+    void deleteByProjectId(Long projectId);
 }

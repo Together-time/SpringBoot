@@ -17,7 +17,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Project> findProjectsByMemberEmail(@Param("email") String email);
 
     @Query("SELECT t FROM Team t WHERE t.project.id = :projectId")
-    List<Team> findByProjectId(Long projectId);
+    List<Team> findByProjectId(@Param("projectId") Long projectId);
 
     @Modifying
     @Query("DELETE FROM Team t WHERE t.member.email=:email AND t.project.id=:projectId")
