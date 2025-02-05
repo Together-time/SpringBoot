@@ -20,4 +20,6 @@ public interface ProjectMongoRepository extends MongoRepository<ProjectDocument,
     @Query("{ 'projectId': ?0 }")
     @Update("{ '$set': { 'title': ?1, 'tags': ?2 } }")
     void replaceTags(Long projectId, String title, List<String> tags);
+
+    void deleteByProjectId(Long projectId);
 }

@@ -74,4 +74,8 @@ public class ChatService {
 
         chatMongoRepository.saveAll(unreadMessages);
     }
+
+    public void deleteByProjectId(Long projectId) {
+        chatMongoRepository.deleteByProjectId(projectId);
+    }
 }

@@ -28,6 +28,7 @@ public class ProjectService {
     private final ProjectDtoService projectDtoService;
     private final TeamService teamService;
     private final MemberService memberService;
+    private final ChatService chatService;
     private final RedisDao redisDao;
 
     public Optional<ProjectDocument> findTagsByProjectId(Long projectId){
@@ -96,12 +97,17 @@ public class ProjectService {
         List<String> tags = projectCommand.getTags();
 
         Project project = findById(projectId);
-        if(project != null) {
-            if (!project.getTitle().equals(title))
-                projectRepository.updateProject(project.getId(), title);
-            teamService.updateTeam(project, members);
-            projectMongoRepository.replaceTags(project.getId(), title, tags);
+        ProjectDocument projectDocument = projectMongoRepository.findByProjectId(project.getId())
+                .orElseThrow(()->new EntityNotFoundException("해당 Project Document는 존재하지 않습니다."));
+
+        if (!project.getTitle().equals(title)) {
+            projectRepository.updateProject(project.getId(), title);
+            projectDocument.setTitle(title);
         }
+        teamService.updateTeam(project, members);
+
+        projectDocument.setTags(tags);
+        projectMongoRepository.save(projectDocument);
     }
 
     public void updateProjectStatus(String logged, Long projectId) {
@@ -125,6 +131,8 @@ public class ProjectService {
 
         if(isExistingMember){
             projectRepository.deleteById(projectId);
+            projectMongoRepository.deleteByProjectId(projectId);
+            chatService.deleteByProjectId(projectId);
         }else
             throw new AccessDeniedException("권한이 없습니다.");
     }
