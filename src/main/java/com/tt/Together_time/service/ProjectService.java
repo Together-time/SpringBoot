@@ -6,6 +6,7 @@ import com.tt.Together_time.domain.enums.ProjectVisibility;
 import com.tt.Together_time.domain.mongodb.ProjectDocument;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.domain.rdb.Project;
+import com.tt.Together_time.repository.ChatMongoRepository;
 import com.tt.Together_time.repository.ProjectMongoRepository;
 import com.tt.Together_time.repository.ProjectRepository;
 import com.tt.Together_time.repository.RedisDao;
@@ -25,10 +26,10 @@ import java.util.Optional;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMongoRepository projectMongoRepository;
+    private final ChatMongoRepository chatMongoRepository;
     private final ProjectDtoService projectDtoService;
     private final TeamService teamService;
     private final MemberService memberService;
-    private final ChatService chatService;
     private final RedisDao redisDao;
 
     public Optional<ProjectDocument> findTagsByProjectId(Long projectId){
@@ -132,7 +133,7 @@ public class ProjectService {
         if(isExistingMember){
             projectRepository.deleteById(projectId);
             projectMongoRepository.deleteByProjectId(projectId);
-            chatService.deleteByProjectId(projectId);
+            chatMongoRepository.deleteByProjectId(projectId);
         }else
             throw new AccessDeniedException("권한이 없습니다.");
     }
