@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
 import com.tt.Together_time.domain.dto.ChatDto;
-import com.tt.Together_time.security.JwtTokenProvider;
 import com.tt.Together_time.service.ChatService;
 import com.tt.Together_time.service.MemberService;
 import lombok.RequiredArgsConstructor;
