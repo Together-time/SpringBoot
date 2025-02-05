@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Document(collection = "messages")
 @Getter
@@ -21,4 +23,5 @@ public class ChatDocument {
     private LocalDateTime createdAt;
     private Member sender;
     private String projectId;
+    private List<String> unreadBy = new ArrayList<>();
 }
