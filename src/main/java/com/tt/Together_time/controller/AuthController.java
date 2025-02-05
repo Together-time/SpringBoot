@@ -2,15 +2,18 @@ package com.tt.Together_time.controller;
 
 import com.tt.Together_time.domain.dto.KakaoUserInfo;
 import com.tt.Together_time.domain.dto.MemberDto;
+import com.tt.Together_time.domain.rdb.Member;
 import jakarta.servlet.http.HttpServletResponse;
 import com.tt.Together_time.service.KakaoUserService;
 import com.tt.Together_time.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,8 +40,10 @@ public class AuthController {
         String accessToken = kakaoService.getAccessToken(code);
         KakaoUserInfo userInfo = kakaoService.getUserInfo(accessToken);
         MemberDto memberDto = memberService.kakaoLogin(userInfo, response);
-        response.sendRedirect("http://localhost:3000?token=" + memberDto.getJwtToken());
-        return ResponseEntity.ok(memberDto);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + memberDto.getJwtToken())
+                .body(memberDto);
     }
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급
