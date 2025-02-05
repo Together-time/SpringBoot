@@ -29,7 +29,7 @@ public class TeamController {
     
     //현재 프로젝트에 참여 중인 팀원 목록
     @GetMapping("/{projectId}")
-    public ResponseEntity<List<MemberDto>> getMembers(@PathVariable Long projectId){
+    public ResponseEntity<List<MemberDto>> getMembers(@PathVariable("projectId") Long projectId){
         List<MemberDto> memberDtos = teamService.findByProjectId(projectId);
         return ResponseEntity.ok(memberDtos);
     }
