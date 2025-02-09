@@ -1,10 +1,11 @@
 package com.tt.Together_time.domain.mongodb;
 
-import com.tt.Together_time.domain.rdb.Member;
+import com.tt.Together_time.domain.dto.Sender;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -20,8 +21,11 @@ public class ChatDocument {
     private String id;
 
     private String content;
+
+    @CreatedDate
     private LocalDateTime createdAt;
-    private Member sender;
-    private String projectId;
-    private List<String> unreadBy = new ArrayList<>();
+
+    private Sender sender;
+    private Long projectId;
+    private List<Sender> unreadBy = new ArrayList<>();
 }

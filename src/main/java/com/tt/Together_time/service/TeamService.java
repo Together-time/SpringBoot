@@ -11,13 +11,17 @@ import com.tt.Together_time.repository.TeamRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TeamService {
@@ -32,6 +36,8 @@ public class TeamService {
         return projectList.stream().map(projectDtoService::convertToDto).collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "teamMembers", key = "#projectId")
+    @CachePut(value = "teamMembers", key = "#projectId")
     public void addTeam(String logged, Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
@@ -69,6 +75,8 @@ public class TeamService {
         );
     }
 
+    @CacheEvict(value = "teamMembers", key = "#projectId")
+    @CachePut(value = "teamMembers", key = "#projectId")
     @Transactional
     public void leaveTeam(String logged, Long projectId) {
         Project project = projectRepository.findById(projectId)
@@ -84,18 +92,18 @@ public class TeamService {
         }
     }
 
+    @Cacheable(value = "teamMembers", key = "#projectId", unless = "#result == null or #result.isEmpty()")
     public List<MemberDto> findByProjectId(Long projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(()->new EntityNotFoundException());
+                .orElseThrow(()->new EntityNotFoundException("존재하지 않는 프로젝트입니다."));
 
         List<Team> teamList = teamRepository.findByProjectId(project.getId());
 
         List<Member> members = teamList.stream().map(Team::getMember).collect(Collectors.toList());
 
         List<MemberDto> memberDtos = members.stream().map(member -> {
-            //String redisKey = "MEMBER_ONLINE"+member.getEmail();
-            //Boolean isOnline = Boolean.TRUE.equals(redisDao.getValues(redisKey));
             boolean isOnline = onlineStatusService.isOnline(member.getEmail());
+
             return new MemberDto(
                     member.getNickname(),
                     member.getEmail(),

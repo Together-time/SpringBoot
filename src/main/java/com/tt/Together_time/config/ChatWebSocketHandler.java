@@ -2,20 +2,23 @@ package com.tt.Together_time.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tt.Together_time.domain.dto.MemberDto;
+import com.tt.Together_time.domain.dto.Sender;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
 import com.tt.Together_time.domain.dto.ChatDto;
 import com.tt.Together_time.service.ChatService;
 import com.tt.Together_time.service.MemberService;
+import com.tt.Together_time.service.TeamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -25,13 +28,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ChatService chatService;
     private final ObjectMapper objectMapper;
     private final MemberService memberService;
+    private final TeamService teamService;
 
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         sessions.put(session.getId(), session);
-        System.out.println("새 연결: " + session.getId());
     }
 
     @Override
@@ -48,17 +51,23 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         if(type.equals("send")){
             ChatDocument chatDocument = objectMapper.readValue(payload, ChatDocument.class);
-            if (chatDocument.getCreatedAt() == null) {
-                chatDocument.setCreatedAt(LocalDateTime.now());
-            }
-            chatService.publishMessage(chatDocument.getProjectId(), payload);
+            List<MemberDto> teamMembers = teamService.findByProjectId(chatDocument.getProjectId());
+            Sender sender = chatDocument.getSender();
+
+            List<Sender> unread = teamMembers.stream()
+                    .map(member->new Sender(member.getNickname(), member.getEmail()))
+                    .filter(member -> !member.getEmail().equals(sender.getEmail()))
+                    .collect(Collectors.toList());
+
+            chatDocument.setUnreadBy(unread);
+            chatService.publishMessage(String.valueOf(chatDocument.getProjectId()), payload);
             chatService.saveMessageToMongoDB(chatDocument);
         }else if(type.equals("read")){
             String projectId = jsonNode.get("projectId").asText();
             String loggedInMember = memberService.getUserEmail();
 
-            List<ChatDocument> unreadMessages = chatService.getUnreadMessages(projectId, loggedInMember);
-            chatService.markMessagesAsRead(projectId, loggedInMember);
+            List<ChatDocument> unreadMessages = chatService.getUnreadMessages(Long.parseLong(projectId), loggedInMember);
+            chatService.markMessagesAsRead(Long.parseLong(projectId), loggedInMember);
 
             for (ChatDocument chat : unreadMessages) {
                 broadcastMessage(chat);
