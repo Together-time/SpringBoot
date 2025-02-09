@@ -1,4 +1,7 @@
 spring:
+  host:
+    api: http://localhost:8080
+    front: http://localhost:3000
   datasource:
     url: ${DB_URL}
     username: ${USER_NAME}

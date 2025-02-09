@@ -20,8 +20,6 @@ public class ChatController {
     private final ChatService chatService;
     private final MemberService memberService;
 
-    private final ChatMongoRepository chatMongoRepository;
-
     @GetMapping
     public ResponseEntity<List<ChatDto>> getMessages(
             @RequestParam Long projectId,
