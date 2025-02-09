@@ -13,14 +13,14 @@ import java.time.LocalDateTime;
 public class ChatDto {
     private String content;
     private LocalDateTime createdAt;
-    private String sender;
-    private String projectId;
+    private Sender sender;
+    private Long projectId;
     private int unreadCount;
 
     public ChatDto(ChatDocument chatDocument) {
         this.content = chatDocument.getContent();
         this.createdAt = chatDocument.getCreatedAt();
-        this.sender = chatDocument.getSender().getNickname();
+        this.sender = chatDocument.getSender();
         this.projectId = chatDocument.getProjectId();
         this.unreadCount = chatDocument.getUnreadBy().size(); // 안 읽은 사람 수 계산
     }

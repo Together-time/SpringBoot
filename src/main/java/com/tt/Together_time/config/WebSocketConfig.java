@@ -8,6 +8,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+import java.util.Map;
+
 @Slf4j
 @Configuration
 @EnableWebSocket
@@ -24,13 +26,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         log.info("✅ WebSocket 핸들러 등록 시작");
+
         registry.addHandler(webSocketHandler, "/ws/online-status")
-                .setAllowedOriginPatterns("http://localhost:3000")
-                .withSockJS();
+                .setAllowedOriginPatterns("http://localhost:3000");
 
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .setAllowedOriginPatterns("*");
         log.info("✅ WebSocket 핸들러 등록 완료: /ws/chat");
     }
 }

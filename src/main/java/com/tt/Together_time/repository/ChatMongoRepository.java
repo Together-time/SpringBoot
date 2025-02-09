@@ -3,6 +3,7 @@ package com.tt.Together_time.repository;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
 
@@ -10,9 +11,9 @@ public interface ChatMongoRepository extends MongoRepository<ChatDocument, Strin
 
     List<ChatDocument> findByProjectIdOrderByCreatedAtDesc(String projectId, Pageable pageable);
 
-    long countByProjectIdAndUnreadByContains(String projectId, String logged);
+    long countByProjectIdAndUnreadByEmail(Long projectId, String email);
 
-    List<ChatDocument> findByProjectIdAndUnreadByContains(String projectId, String logged);
+    List<ChatDocument> findByProjectIdAndUnreadByEmail(Long projectId, String email);
 
     void deleteByProjectId(Long projectId);
 }
