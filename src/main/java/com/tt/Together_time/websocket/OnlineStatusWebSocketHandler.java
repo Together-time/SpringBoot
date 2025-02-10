@@ -1,4 +1,4 @@
-package com.tt.Together_time.config;
+package com.tt.Together_time.websocket;
 
 import com.tt.Together_time.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;

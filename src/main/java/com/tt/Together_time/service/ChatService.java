@@ -1,18 +1,20 @@
 package com.tt.Together_time.service;
 
-import com.tt.Together_time.domain.dto.ChatDto;
+import com.mongodb.BasicDBObject;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
 import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.repository.ChatMongoRepository;
 import com.tt.Together_time.repository.RedisDao;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -20,29 +22,31 @@ public class ChatService {
     private final ProjectService projectService;
     private final RedisDao redisDao;
     private final ChatMongoRepository chatMongoRepository;
+    private final MongoTemplate mongoTemplate;
 
-    public void publishMessage(String projectId, String message) {
-        Project project = projectService.findById(Long.valueOf(projectId));
-
-        redisDao.publishMessage("chat:project:"+projectId, message);
+    public void publishMessage(String projectId, String message, String type) {
+        //Project project = projectService.findById(Long.valueOf(projectId));
+        String channel = "chat:project:" + projectId + (type.equals("read") ? ":read" : ":message");
+        redisDao.publishMessage(channel, message);
     }
 
-    public List<ChatDocument> getUnreadMessages(Long projectId, String logged){
-        return chatMongoRepository.findByProjectIdAndUnreadByEmail(projectId, logged);
+    public List<ChatDocument> getLatestMessages(Long projectId) {
+        Query query = new Query(Criteria.where("projectId").is(projectId))
+                .with(Sort.by(Sort.Direction.DESC, "createdAt")) // 최신순 정렬
+                .limit(30);
+
+        return mongoTemplate.find(query, ChatDocument.class);
     }
 
-    public List<ChatDto> getChatMessages(Long projectId, long start, long end) {
-        int limit = (int) (end - start + 1); // 가져올 메시지 개수
-        int page = (int) (start / limit);   // 현재 페이지 계산
+    public List<ChatDocument> getMessagesBefore(Long projectId, LocalDateTime before) {
+        Query query = new Query(Criteria.where("projectId").is(projectId)
+                .and("createdAt").lt(before))
+                .with(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .limit(30);
 
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        List<ChatDocument> chatDocuments = chatMongoRepository.findByProjectIdOrderByCreatedAtDesc(String.valueOf(projectId), pageable);
-
-        return chatDocuments.stream()
-                .map(ChatDto::new)
-                .collect(Collectors.toList());
+        return mongoTemplate.find(query, ChatDocument.class);
     }
+
     public void saveMessageToMongoDB(ChatDocument chatDocument) {
         chatMongoRepository.save(chatDocument);
     }
@@ -54,13 +58,15 @@ public class ChatService {
 
     // 메시지 읽음 처리
     public void markMessagesAsRead(Long projectId, String logged) {
-        List<ChatDocument> unreadMessages = chatMongoRepository.findByProjectIdAndUnreadByEmail(projectId, logged);
+        Query query = new Query(Criteria.where("projectId").is(projectId)
+                .and("unreadBy.email").is(logged));
+        Update update = new Update().pull("unreadBy", new BasicDBObject("email", logged));
+        mongoTemplate.updateMulti(query, update, ChatDocument.class);
+    }
 
-        unreadMessages.forEach(chat -> {
-            chat.getUnreadBy().removeIf(sender -> sender.getEmail().equals(logged));
-        });
-
-
-        chatMongoRepository.saveAll(unreadMessages);
+    public List<ChatDocument> getUnreadMessages(Long projectId, String logged){
+        Query query = new Query(Criteria.where("projectId").is(projectId)
+                .and("unreadBy.email").is(logged));
+        return mongoTemplate.find(query, ChatDocument.class);
     }
 }

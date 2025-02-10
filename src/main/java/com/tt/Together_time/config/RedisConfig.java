@@ -23,7 +23,7 @@ public class RedisConfig {
     }
     
     //redis 연결 설정 및 pub/sub 채널 구독 초기화
-    @Bean   //redis pub//sub 구독을 위한 리스너 컨테이너 - 특정 redis 채널에 대해 구독 및 처리
+    @Bean   //redis pub/sub 구독을 위한 리스너 컨테이너 - 특정 redis 채널에 대해 구독 및 처리
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
             MessageListenerAdapter messageListenerAdapter) {

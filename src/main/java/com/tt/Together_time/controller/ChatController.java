@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -21,24 +23,22 @@ public class ChatController {
     private final MemberService memberService;
 
     @GetMapping
-    public ResponseEntity<List<ChatDto>> getMessages(
+    public ResponseEntity<List<ChatDto>> getMessagesBefore(
             @RequestParam Long projectId,
-            @RequestParam long start,
-            @RequestParam long end) {
-        List<ChatDto> messages = chatService.getChatMessages(projectId, start, end);
+            @RequestParam LocalDateTime before) {
+        List<ChatDocument> messages = chatService.getMessagesBefore(projectId, before);
 
-        return ResponseEntity.ok(messages);
+        List<ChatDto> messageDtos = messages.stream().map(ChatDto::new).collect(Collectors.toList());
+
+        return ResponseEntity.ok(messageDtos);
     }
     //안 읽은 메시지 개수
     @GetMapping("/unread")
     public ResponseEntity<Long> getUnreadCount(
             @RequestParam Long projectId) {
         String loggedInMember = memberService.getUserEmail();
-
-        log.info("loggedInMember {}", loggedInMember);
-
         long count = chatService.getUnreadMessageCount(projectId, loggedInMember);
-        log.info("count {}", count);
+
         return ResponseEntity.ok(count);
     }
 }

@@ -37,6 +37,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0'
 
 	//jwt
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
