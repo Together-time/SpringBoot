@@ -49,7 +49,7 @@ public class ProjectController {
     
     //태그 편집
     @PutMapping("/{projectId}/tag")
-    public ResponseEntity<Boolean> updateProjectTags(@PathVariable Long projectId, @RequestParam List<String> tags){
+    public ResponseEntity<Boolean> updateProjectTags(@PathVariable Long projectId, @RequestBody List<String> tags){
         String loggedInMember = memberService.getUserEmail();
 
         projectService.updateProjectTags(loggedInMember, projectId, tags);
