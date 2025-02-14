@@ -37,7 +37,6 @@ public class TeamController {
     @PostMapping    //팀원 추가
     public ResponseEntity<Boolean> addTeam(@RequestBody TeamCommand teamCommand){
         String loggedInMember = memberService.getUserEmail();
-
         teamService.addTeam(loggedInMember, teamCommand.getMember(), teamCommand.getProjectId());
         return ResponseEntity.ok(true);
     }

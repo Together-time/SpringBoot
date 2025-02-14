@@ -1,5 +1,6 @@
 package com.tt.Together_time.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.tt.Together_time.domain.enums.ProjectVisibility;
 import lombok.*;
 
@@ -9,6 +10,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectDto {
     private Long id;
     private String title;

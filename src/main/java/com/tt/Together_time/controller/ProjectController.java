@@ -1,5 +1,7 @@
 package com.tt.Together_time.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
 import com.tt.Together_time.domain.enums.ProjectSortType;
@@ -62,8 +64,6 @@ public class ProjectController {
         projectService.updateProjectStatus(loggedInMember, projectId);
         return ResponseEntity.ok().body(true);
     }
-
-
 
     @DeleteMapping("{projectId}")
     public ResponseEntity<Boolean> removeProject(@PathVariable Long projectId){
