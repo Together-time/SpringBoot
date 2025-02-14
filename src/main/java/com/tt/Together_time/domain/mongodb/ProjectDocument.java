@@ -1,5 +1,6 @@
 package com.tt.Together_time.domain.mongodb;
 
+import com.tt.Together_time.domain.enums.ProjectVisibility;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class ProjectDocument {
 
     private Long projectId;
     private String title;
+    private ProjectVisibility status;
     private List<String> tags;
     private Long views;
     private LocalDateTime createdAt;

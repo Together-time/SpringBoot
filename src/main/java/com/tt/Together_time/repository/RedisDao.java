@@ -2,29 +2,36 @@ package com.tt.Together_time.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 @RequiredArgsConstructor
 public class RedisDao {
     private final RedisTemplate<String, String> redisTemplate;
 
-    public void setValues(String key, String data) {
-        redisTemplate.opsForValue().set(key, data);
+    //조회한 사용자인지
+    public boolean isMember(String key, String value) {
+        return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(key, value));
+    }
+    //조회 여부 저장
+    public void addToSet(String key, String value) {
+        redisTemplate.opsForSet().add(key, value);
+    }
+    //조회수 증가
+    public Long increment(String key) {
+        return redisTemplate.opsForValue().increment(key);
     }
 
-    public void setValuesList(String key, String data) {
-        redisTemplate.opsForList().rightPushAll(key,data);
+    public void setValuesWithTTL(String key, String value, long ttlSeconds) {
+        redisTemplate.opsForValue().set(key, value, ttlSeconds, TimeUnit.SECONDS);
     }
 
-    public List<String> getValuesList(String key) {
-        Long len = redisTemplate.opsForList().size(key);
-        return len == 0 ? new ArrayList<>() : redisTemplate.opsForList().range(key, 0, len-1);
+    public Set<String> getKeysByPattern(String pattern) {
+        return redisTemplate.keys(pattern);
     }
 
     // Refresh Token 저장 - 사용자 로그인
