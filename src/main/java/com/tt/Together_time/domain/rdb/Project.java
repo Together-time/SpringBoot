@@ -1,6 +1,5 @@
 package com.tt.Together_time.domain.rdb;
 
-import com.tt.Together_time.domain.enums.ProjectVisibility;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -35,8 +34,8 @@ public class Project {
     @OneToMany(mappedBy = "project")
     private List<Message> messageList = new ArrayList<>();
     */
-    private Long views;
+    //private Long views;
 
-    @Enumerated(EnumType.STRING)
-    private ProjectVisibility status;
+    /*@Enumerated(EnumType.STRING)
+    private ProjectVisibility status;*/
 }

@@ -2,6 +2,7 @@ package com.tt.Together_time.service;
 
 import com.tt.Together_time.domain.dto.ProjectCommand;
 import com.tt.Together_time.domain.dto.ProjectDto;
+import com.tt.Together_time.domain.enums.ProjectSortType;
 import com.tt.Together_time.domain.enums.ProjectVisibility;
 import com.tt.Together_time.domain.mongodb.ProjectDocument;
 import com.tt.Together_time.domain.rdb.Member;
@@ -13,14 +14,14 @@ import com.tt.Together_time.repository.RedisDao;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
@@ -32,16 +33,14 @@ public class ProjectService {
     private final MemberService memberService;
     private final RedisDao redisDao;
 
-    public Optional<ProjectDocument> findTagsByProjectId(Long projectId){
-        return projectMongoRepository.findByProjectId(projectId);
-    }
 
+    @Transactional
     public void updateProjectTags(String logged, Long projectId, List<String> tags) {
         Project project = findById(projectId);
         boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember)
-            projectMongoRepository.replaceTags(projectId, project.getTitle(), tags);
+            projectMongoRepository.replaceTags(project.getId(), tags);
         else
             throw new AccessDeniedException("권한이 없습니다.");
     }
@@ -49,12 +48,13 @@ public class ProjectService {
     public ProjectDto getProject(Long projectId, String logged){
         Project project = findById(projectId);
         ProjectDto projectDto = projectDtoService.convertToDto(project);
-        ProjectDocument projectDocument = findTagsByProjectId(projectId).get();
+        ProjectDocument projectDocument = projectMongoRepository.findByProjectId(project.getId())
+                .orElseThrow(()->new EntityNotFoundException("해당 Project Document는 존재하지 않습니다."));
         projectDto.setTags(projectDocument.getTags());
+        projectDto.setStatus(projectDocument.getStatus());
 
-
-        if(!teamService.existsByProjectIdAndMemberEmail(projectId, logged)){    //조회수 증가
-            Long views = viewProject(project, logged);
+        if(!teamService.existsByProjectIdAndMemberEmail(projectId, logged)){
+            Long views = viewProject(projectDocument, logged);
             projectDto.setViews(views);
         }
 
@@ -66,8 +66,6 @@ public class ProjectService {
         Project project = projectRepository.save(
                 Project.builder()
                         .title(projectCommand.getTitle())
-                        .status(ProjectVisibility.PUBLIC)
-                        .views(0L)
                         .build()
         );
 
@@ -84,6 +82,7 @@ public class ProjectService {
                 null,
                 project.getId(),
                 project.getTitle(),
+                ProjectVisibility.PUBLIC,
                 projectCommand.getTags(),
                 0L,
                 LocalDateTime.now()
@@ -112,15 +111,16 @@ public class ProjectService {
     }
 
     public void updateProjectStatus(String logged, Long projectId) {
-        Project project = findById(projectId);
+        ProjectDocument projectDocument = projectMongoRepository.findByProjectId(projectId).orElseThrow(()->new EntityNotFoundException("해당 Document는 존재하지 않습니다."));
 
         boolean isExistingMember = teamService.existsByProjectIdAndMemberEmail(projectId, logged);
 
         if(isExistingMember){
-            ProjectVisibility newVisibility = (project.getStatus() == ProjectVisibility.PUBLIC)
+            ProjectVisibility newVisibility = (projectDocument.getStatus() == ProjectVisibility.PUBLIC)
                     ? ProjectVisibility.PRIVATE
                     : ProjectVisibility.PUBLIC;
-            projectRepository.updateProjectStatus(projectId, newVisibility);
+            projectDocument.setStatus(newVisibility);
+            projectMongoRepository.save(projectDocument);
         }else
             throw new AccessDeniedException("권한이 없습니다.");
     }
@@ -138,35 +138,31 @@ public class ProjectService {
             throw new AccessDeniedException("권한이 없습니다.");
     }
 
-    public List<ProjectDocument> findProjectsByKeyword(String keyword) {
-        Sort sortByCreatedAt = Sort.by(Sort.Direction.DESC, "createdAt");
-        List<ProjectDocument> projectsBytags = projectMongoRepository.searchByTitleOrTags(keyword, sortByCreatedAt);
+    public List<ProjectDocument> findProjectsByKeyword(String keyword, ProjectSortType projectSortType) {
 
+        log.info("here0");
+        List<ProjectDocument> projectsBytags = projectMongoRepository.searchByTitleOrTags(keyword, projectSortType.getSort());
+        log.info("{}", projectsBytags.size());
         return projectsBytags;
     }
 
-    //조회수
     @Transactional
-    public Long viewProject(Project project, String logged){
-        String redisKey = "views:"+String.valueOf(project.getId());
+    public Long viewProject(ProjectDocument projectDocument, String logged){
+        String redisKey = "views:"+String.valueOf(projectDocument.getProjectId());
+        String userViewKey = "user_views:" + logged;
+
         String values = redisDao.getValues(redisKey);
-        if(values==null || values.equals("0")){
-            values = project.getViews()>0? String.valueOf(project.getViews()):String.valueOf(0);
+        Long views = (values != null) ? Long.parseLong(values) : projectDocument.getViews();
+
+        if(!redisDao.isMember(userViewKey, redisKey)){
+            redisDao.addToSet(userViewKey, redisKey);
+            views = redisDao.increment(redisKey);
         }
 
-        Long views = Long.valueOf(values);
+        redisDao.setValuesWithTTL(redisKey, String.valueOf(views), 3600);
 
-        if(!redisDao.getValuesList(logged).contains(redisKey)){
-            redisDao.setValuesList(logged, redisKey);
-            views++;
-            redisDao.setValues(redisKey, String.valueOf(views));
-
-        }
         return views;
     }
-    
-    //Redis에서 모든 조회수 가져오기
-
 
     public Project findById(Long projectId){
         return projectRepository.findById(projectId).orElseThrow(()->new EntityNotFoundException("해당 프로젝트는 존재하지 않습니다."));

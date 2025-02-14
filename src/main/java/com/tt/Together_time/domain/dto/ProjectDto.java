@@ -15,4 +15,9 @@ public class ProjectDto {
     private ProjectVisibility status;
     private Long views;
     private List<String> tags;
+
+    public ProjectDto(Long id, String title) {
+        this.id = id;
+        this.title = title;
+    }
 }
