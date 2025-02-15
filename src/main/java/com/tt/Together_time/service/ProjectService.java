@@ -47,11 +47,9 @@ public class ProjectService {
     
     public ProjectDto getProject(Long projectId, String logged){
         Project project = findById(projectId);
-        ProjectDto projectDto = projectDtoService.convertToDto(project);
         ProjectDocument projectDocument = projectMongoRepository.findByProjectId(project.getId())
                 .orElseThrow(()->new EntityNotFoundException("해당 Project Document는 존재하지 않습니다."));
-        projectDto.setTags(projectDocument.getTags());
-        projectDto.setStatus(projectDocument.getStatus());
+        ProjectDto projectDto = projectDtoService.convertToDto(project, projectDocument);
 
         if(!teamService.existsByProjectIdAndMemberEmail(projectId, logged)){
             Long views = viewProject(projectDocument, logged);

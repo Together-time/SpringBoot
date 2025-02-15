@@ -2,10 +2,12 @@ package com.tt.Together_time.service;
 
 import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.dto.ProjectDto;
+import com.tt.Together_time.domain.mongodb.ProjectDocument;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.domain.rdb.Team;
 import com.tt.Together_time.repository.MemberRepository;
+import com.tt.Together_time.repository.ProjectMongoRepository;
 import com.tt.Together_time.repository.ProjectRepository;
 import com.tt.Together_time.repository.TeamRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -28,12 +30,18 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectMongoRepository projectMongoRepository;
     private final ProjectDtoService projectDtoService;
     private final OnlineStatusService onlineStatusService;
 
     public List<ProjectDto> getProjects(String loggedEmail) {
         List<Project> projectList = teamRepository.findProjectsByMemberEmail(loggedEmail);
-        return projectList.stream().map(projectDtoService::convertToDto).collect(Collectors.toList());
+
+        return projectList.stream().map(project -> {
+            ProjectDocument projectDocument = projectMongoRepository.findByProjectId(project.getId())
+                            .orElseThrow(()->new EntityNotFoundException("해당 Project Document는 존재하지 않습니다."));
+            return projectDtoService.convertToDto(project, projectDocument);
+        }).collect(Collectors.toList());
     }
 
     @CacheEvict(value = "teamMembers", key = "#projectId")
@@ -41,7 +49,7 @@ public class TeamService {
     public void addTeam(String logged, Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
-        //권한 확인
+
         boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged);
         if(isExistingMember){
             Member newMember = memberRepository.findById(member.getId())
@@ -116,7 +124,7 @@ public class TeamService {
 
     public void updateTeam(Project project, List<Member> members) {
         List<MemberDto> originMembers = findByProjectId(project.getId());
-        //팀원 내보내기 기능이 없으므로 추가만 하면 된다
+        //팀원 내보내기 기능이 없으므로 추가만
         for(Member member : members){
             if(originMembers.equals(member.getEmail()))
                 continue;
