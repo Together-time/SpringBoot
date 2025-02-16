@@ -36,15 +36,15 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         redisDao.setValues(email, refreshToken, Duration.ofDays(15));
 
-        // Refresh Token을 HTTP-Only 쿠키로 설정
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        /*Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
-        response.addCookie(refreshTokenCookie);
+        response.addCookie(refreshTokenCookie);*/
 
         // JWT를 프론트엔드로 전달
         // HttpOnly & Secure 쿠키 사용으로 바꾸기 -> 회의 안건
-        response.sendRedirect("http://localhost:3000?token=" + accessToken);
+        //response.sendRedirect("http://localhost:3000?token=" + accessToken);
+        //response.sendRedirect("http://localhost:3000/auth/kakao/callback?token=" + accessToken);
     }
 }

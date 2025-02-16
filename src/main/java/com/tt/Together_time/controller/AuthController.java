@@ -32,8 +32,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급
-    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request) {
-         String newAccessToken = memberService.refreshAccessToken(request);
+    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+         String newAccessToken = memberService.refreshAccessToken(request, response);
          return ResponseEntity.ok(newAccessToken);
     }
 

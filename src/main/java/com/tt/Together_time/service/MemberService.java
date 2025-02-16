@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -58,22 +59,22 @@ public class MemberService {
         redisDao.addToBlacklist(accessToken, expiration);
     }
 
-    //Access 토큰 재발급
-    public String refreshAccessToken(HttpServletRequest request) {
-        // 쿠키에서 Refresh Token 추출
+    //Access 토큰 재발급(리프레시 토큰도 같이 재발급-탈취 방지)
+    public String refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = Arrays.stream(request.getCookies())
                 .filter(cookie -> "refreshToken".equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
                 .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
 
-        // Refresh Token 검증 및 Access Token 발급
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         String storedRefreshToken = redisDao.getValues(email);
 
-        //System.out.println("refresh token : "+storedRefreshToken);
-
         if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
+            redisDao.deleteValues(email);
+            String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+            redisDao.setValues(email, newRefreshToken, Duration.ofDays(15));
+
             return jwtTokenProvider.generateToken(email);
         }
         throw new InvalidRefreshTokenException("Invalid Refresh Token");
