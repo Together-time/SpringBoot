@@ -66,18 +66,39 @@ public class MemberService {
                 .findFirst()
                 .map(Cookie::getValue)
                 .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
-
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-        String storedRefreshToken = redisDao.getValues(email);
+        String storedValue = redisDao.getValues(email);
 
-        if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
-            redisDao.deleteValues(email);
-            String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
-            redisDao.setValues(email, newRefreshToken, Duration.ofDays(15));
+        if (storedValue == null)
+            throw new InvalidRefreshTokenException("Refresh Token not found in Redis.");
 
-            return jwtTokenProvider.generateToken(email);
+        String[] tokenData = storedValue.split("|");
+        if (tokenData.length < 3) {
+            throw new InvalidRefreshTokenException("Stored token format is invalid.");
         }
-        throw new InvalidRefreshTokenException("Invalid Refresh Token");
+
+        String storedRefreshToken = tokenData[0];
+        String storedIp = tokenData[1];
+        String storedUserAgent = tokenData[2];
+
+        String clientIp = getClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        if (!refreshToken.equals(storedRefreshToken) || !storedIp.equals(clientIp) || !storedUserAgent.equals(userAgent)) {
+            throw new InvalidRefreshTokenException("Token mismatch or unauthorized client.");
+        }
+
+        redisDao.deleteValues(email);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+        redisDao.setValues(email, newRefreshToken, Duration.ofDays(15));
+
+        Cookie newRefreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
+        newRefreshTokenCookie.setHttpOnly(true);
+        newRefreshTokenCookie.setPath("/");
+        newRefreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
+        response.addCookie(newRefreshTokenCookie);
+
+        return jwtTokenProvider.generateToken(email);
     }
 
     public void withdraw(HttpServletRequest request) {
@@ -112,5 +133,13 @@ public class MemberService {
         }
 
         return authentication.getName();
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -34,17 +34,36 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         String accessToken = jwtTokenProvider.generateToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
 
-        redisDao.setValues(email, refreshToken, Duration.ofDays(15));
+        storeRefreshToken(email, refreshToken, request);
 
-        /*Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        //redisDao.setValues(email, refreshToken, Duration.ofDays(15));
+
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
-        response.addCookie(refreshTokenCookie);*/
+        response.addCookie(refreshTokenCookie);
 
         // JWT를 프론트엔드로 전달
         // HttpOnly & Secure 쿠키 사용으로 바꾸기 -> 회의 안건
         //response.sendRedirect("http://localhost:3000?token=" + accessToken);
         //response.sendRedirect("http://localhost:3000/auth/kakao/callback?token=" + accessToken);
     }
+
+     private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        String tokenData = refreshToken + "|" + clientIp + "|" + userAgent;
+        redisDao.setValues(email, tokenData, Duration.ofDays(15));
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
 }
