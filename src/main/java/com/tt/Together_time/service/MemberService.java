@@ -1,7 +1,5 @@
 package com.tt.Together_time.service;
 
-import com.tt.Together_time.domain.dto.KakaoUserInfo;
-import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.exception.InvalidRefreshTokenException;
 import com.tt.Together_time.repository.MemberRepository;
@@ -12,14 +10,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,37 +27,6 @@ public class MemberService {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RedisDao redisDao;
 
-    public MemberDto kakaoLogin(KakaoUserInfo kakaoUserInfo, HttpServletResponse response){
-        String email = kakaoUserInfo.getKakao_account().getEmail();
-        String nickname = kakaoUserInfo.getKakao_account().getProfile().getNickname();
-        Member member = memberRepository.findByEmail(email)
-                .orElseGet(()->{
-                    Member newMember = Member.builder()
-                            .email(email)
-                            .nickname(nickname)
-                            .build();
-                    return memberRepository.save(newMember);
-                });
-        String jwtToken = jwtTokenProvider.generateToken(member.getEmail());   //JWT Access Token 발급
-        String refreshToken = jwtTokenProvider.generateRefreshToken(member.getEmail());   //Refresh Token 발급
-        redisDao.setValues(member.getEmail(), refreshToken, Duration.ofDays(15));
-        //redisDao.setValues("MEMBER_ONLINE"+email, "logged");    //연결 상태 관리
-
-        // Refresh Token을 HTTP-Only 쿠키에 저장
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);  // JavaScript에서 접근하지 못하도록 설정
-        refreshTokenCookie.setPath("/");       // 쿠키의 유효 경로 설정
-        refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds()); // 쿠키 만료 시간 설정
-        response.addCookie(refreshTokenCookie);
-
-        return new MemberDto(
-                member.getNickname(),
-                member.getEmail(),
-                jwtToken,
-                true
-        );
-    }
-
     public Optional<Member> findByEmail(String email){
         return memberRepository.findByEmail(email);
     }
@@ -70,10 +34,6 @@ public class MemberService {
     public List<Member> findMember(String keyword) {
         return memberRepository.findMember(keyword);
     }
-
-    /*public Optional<Member> findById(Long memberId) {
-        return memberRepository.findById(memberId);
-    }*/
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         // 쿠키에서 Refresh Token 추출
