@@ -18,13 +18,7 @@ public class AuthController {
     private final MemberService memberService;
     @Value("${spring.host.front}")
     private String frontURL;
-
-    /*@GetMapping("/user")
-    public ResponseEntity<String> getUserInfo() {
-        String email = memberService.getUserEmail();
-        return ResponseEntity.ok(email);
-    }
-*/
+        
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
         memberService.logout(request, response);
