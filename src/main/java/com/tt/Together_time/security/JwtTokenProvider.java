@@ -17,7 +17,7 @@ public class JwtTokenProvider { //JWT의 생성 및 검증 역할 수행 Utility
 
     // 토큰 유출 시의 피해 규모 감소를 위해 30분~1시간으로 설정하는 게 일반적
     // 만료된 Access Token은 클라이언트가 Refresh Token을 사용해 재발급 요청
-    private final long validityInMilliseconds = 60*60*1000L;    //1시간(3600초)
+    private final long validityInMilliseconds = 30*60*1000L;    //30분
 
     // Refresh Token의 JWT 만료 시간을 Redis TTL보다 짧게 설정해 만료된 JWT로 Redis를 조회하는 경우가 없도록 함
     private final long refreshValidityInMilliseconds = 14 * 24 * 60 * 60 * 1000L; // 14일

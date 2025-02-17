@@ -1,7 +1,5 @@
 package com.tt.Together_time.service;
 
-import com.tt.Together_time.domain.dto.KakaoUserInfo;
-import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.rdb.Member;
 import com.tt.Together_time.exception.InvalidRefreshTokenException;
 import com.tt.Together_time.repository.MemberRepository;
@@ -12,17 +10,15 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -32,37 +28,6 @@ public class MemberService {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RedisDao redisDao;
 
-    public MemberDto kakaoLogin(KakaoUserInfo kakaoUserInfo, HttpServletResponse response){
-        String email = kakaoUserInfo.getKakao_account().getEmail();
-        String nickname = kakaoUserInfo.getKakao_account().getProfile().getNickname();
-        Member member = memberRepository.findByEmail(email)
-                .orElseGet(()->{
-                    Member newMember = Member.builder()
-                            .email(email)
-                            .nickname(nickname)
-                            .build();
-                    return memberRepository.save(newMember);
-                });
-        String jwtToken = jwtTokenProvider.generateToken(member.getEmail());   //JWT Access Token 발급
-        String refreshToken = jwtTokenProvider.generateRefreshToken(member.getEmail());   //Refresh Token 발급
-        redisDao.setValues(member.getEmail(), refreshToken, Duration.ofDays(15));
-        //redisDao.setValues("MEMBER_ONLINE"+email, "logged");    //연결 상태 관리
-
-        // Refresh Token을 HTTP-Only 쿠키에 저장
-        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
-        refreshTokenCookie.setHttpOnly(true);  // JavaScript에서 접근하지 못하도록 설정
-        refreshTokenCookie.setPath("/");       // 쿠키의 유효 경로 설정
-        refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds()); // 쿠키 만료 시간 설정
-        response.addCookie(refreshTokenCookie);
-
-        return new MemberDto(
-                member.getNickname(),
-                member.getEmail(),
-                jwtToken,
-                true
-        );
-    }
-
     public Optional<Member> findByEmail(String email){
         return memberRepository.findByEmail(email);
     }
@@ -70,10 +35,6 @@ public class MemberService {
     public List<Member> findMember(String keyword) {
         return memberRepository.findMember(keyword);
     }
-
-    /*public Optional<Member> findById(Long memberId) {
-        return memberRepository.findById(memberId);
-    }*/
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         // 쿠키에서 Refresh Token 추출
@@ -98,25 +59,46 @@ public class MemberService {
         redisDao.addToBlacklist(accessToken, expiration);
     }
 
-    //Access 토큰 재발급
-    public String refreshAccessToken(HttpServletRequest request) {
-        // 쿠키에서 Refresh Token 추출
+    //Access 토큰 재발급(리프레시 토큰도 같이 재발급-탈취 방지)
+    public String refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = Arrays.stream(request.getCookies())
                 .filter(cookie -> "refreshToken".equals(cookie.getName()))
                 .findFirst()
                 .map(Cookie::getValue)
                 .orElseThrow(() -> new RuntimeException("Refresh Token not found"));
-
-        // Refresh Token 검증 및 Access Token 발급
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-        String storedRefreshToken = redisDao.getValues(email);
+        String storedValue = redisDao.getValues(email);
 
-        //System.out.println("refresh token : "+storedRefreshToken);
+        if (storedValue == null)
+            throw new InvalidRefreshTokenException("Refresh Token not found in Redis.");
 
-        if (storedRefreshToken != null && storedRefreshToken.equals(refreshToken)) {
-            return jwtTokenProvider.generateToken(email);
+        String[] tokenData = storedValue.split("|");
+        if (tokenData.length < 3) {
+            throw new InvalidRefreshTokenException("Stored token format is invalid.");
         }
-        throw new InvalidRefreshTokenException("Invalid Refresh Token");
+
+        String storedRefreshToken = tokenData[0];
+        String storedIp = tokenData[1];
+        String storedUserAgent = tokenData[2];
+
+        String clientIp = getClientIp(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        if (!refreshToken.equals(storedRefreshToken) || !storedIp.equals(clientIp) || !storedUserAgent.equals(userAgent)) {
+            throw new InvalidRefreshTokenException("Token mismatch or unauthorized client.");
+        }
+
+        redisDao.deleteValues(email);
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
+        redisDao.setValues(email, newRefreshToken, Duration.ofDays(15));
+
+        Cookie newRefreshTokenCookie = new Cookie("refreshToken", newRefreshToken);
+        newRefreshTokenCookie.setHttpOnly(true);
+        newRefreshTokenCookie.setPath("/");
+        newRefreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
+        response.addCookie(newRefreshTokenCookie);
+
+        return jwtTokenProvider.generateToken(email);
     }
 
     public void withdraw(HttpServletRequest request) {
@@ -151,5 +133,13 @@ public class MemberService {
         }
 
         return authentication.getName();
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

@@ -1,8 +1,10 @@
 package com.tt.Together_time.config;
 
+import com.tt.Together_time.handler.CustomOAuth2SuccessHandler;
 import com.tt.Together_time.repository.RedisDao;
 import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
+import com.tt.Together_time.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +27,7 @@ import java.util.Arrays;
 public class SecurityConfig {
     private final RedisDao redisDao;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Value("${spring.host.front}")
     private String frontURL;
@@ -39,9 +42,13 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/api/auth/kakao/callback", true)
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService) // OAuth2 사용자 정보 가져오기
+                        )
+                        .successHandler(new CustomOAuth2SuccessHandler(jwtTokenProvider, redisDao)) // 로그인 성공 시 JWT 발급
+                        .defaultSuccessUrl(frontURL, true)
                 );
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, redisDao), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -58,7 +65,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true); // 쿠키 포함 요청 허용
+        config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(frontURL));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
