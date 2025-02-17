@@ -1,6 +1,7 @@
 package com.tt.Together_time.exception;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,13 +25,12 @@ public class ExceptionHandlerFilter extends OncePerRequestFilter {
             // 필터 체인의 다음 단계로 요청 전달
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
-            // JWT 토큰 만료 예외 처리
             setErrorResponse(HttpServletResponse.SC_UNAUTHORIZED, response, "Expired Token");
+        } catch (JwtException | IllegalArgumentException ex) {
+            setErrorResponse(HttpServletResponse.SC_UNAUTHORIZED, response, "Invalid Token");
         } catch (AccessDeniedException ex) {
-            // 권한 부족 예외 처리
             setErrorResponse(HttpServletResponse.SC_FORBIDDEN, response, "Access Denied");
         } catch (Exception ex) {
-            // 기타 예외 처리
             setErrorResponse(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response, "Internal Server Error");
         }
     }

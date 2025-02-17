@@ -33,34 +33,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (token != null) {
-
-                if (redisDao.getValues(token) != null) {
+                if (redisDao.getValues(token) != null)
                     throw new BlacklistedTokenException("Token is blacklisted. Please login again.");
-                }
+
                 if (jwtTokenProvider.validateToken(token)) {
                     String email = jwtTokenProvider.getEmailFromToken(token);
-
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
                             email, null, Collections.emptyList());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (ExpiredJwtException e) {
-            // Access Token이 만료된 경우 예외 처리
-            request.setAttribute("exception", "ExpiredToken");
+            throw new ExpiredJwtException(e.getHeader(), e.getClaims(), "Expired Token");
         } catch (JwtException | IllegalArgumentException e) {
-            // 토큰이 조작된 경우 예외 처리
-            request.setAttribute("exception", "InvalidToken");
+            throw new JwtException("Invalid Token");
         }
-
         filterChain.doFilter(request, response);
     }
     public String resolveToken(HttpServletRequest request) {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
+                if ("accessToken".equals(cookie.getName()))
                     return cookie.getValue();
-                }
             }
         }
         return null;

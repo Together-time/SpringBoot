@@ -18,7 +18,7 @@ public class AuthController {
     private final MemberService memberService;
     @Value("${spring.host.front}")
     private String frontURL;
-        
+
     @PostMapping("/logout")
     public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
         memberService.logout(request, response);
@@ -32,8 +32,8 @@ public class AuthController {
     }
 
     @DeleteMapping
-    public ResponseEntity<Boolean> withdraw(HttpServletRequest request){
-        memberService.withdraw(request);
+    public ResponseEntity<Boolean> withdraw(HttpServletRequest request, HttpServletResponse response){
+        memberService.withdraw(request, response);
         return ResponseEntity.ok(true);
     }
 }

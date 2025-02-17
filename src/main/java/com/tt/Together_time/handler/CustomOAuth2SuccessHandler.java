@@ -60,11 +60,16 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            return ip.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
+        String[] headerTypes = {"X-Forwarded-For", "Proxy-Client-IP",
+                "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
 
+        String ip = "";
+        for(String headerType: headerTypes) {
+            ip = request.getHeader(headerType);
+            if(ip != null) break;
+        }
+
+        if(ip==null) ip = request.getRemoteAddr();
+        return ip;
+    }
 }

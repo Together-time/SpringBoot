@@ -65,7 +65,7 @@ public class ProjectController {
         return ResponseEntity.ok().body(true);
     }
 
-    @DeleteMapping("{projectId}")
+    @DeleteMapping("/{projectId}")
     public ResponseEntity<Boolean> removeProject(@PathVariable Long projectId){
         String loggedInMember = memberService.getUserEmail();
 

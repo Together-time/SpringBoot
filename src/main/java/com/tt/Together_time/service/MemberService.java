@@ -37,29 +37,6 @@ public class MemberService {
         return memberRepository.findMember(keyword);
     }
 
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        // 쿠키에서 Refresh Token 추출
-        String refreshToken = Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
-        if (refreshToken != null) {
-            String email = jwtTokenProvider.getEmailFromToken(refreshToken);
-            redisDao.deleteValues(email);
-        }
-        // 클라이언트의 Refresh Token 쿠키 삭제
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(0); // 쿠키 즉시 삭제
-        cookie.setPath("/");
-        response.addCookie(cookie);
-        //블랙리스트를 사용하여 access token 무효화
-        String accessToken = jwtAuthenticationFilter.resolveToken(request);
-        Long expiration = jwtTokenProvider.getExpiration(accessToken);
-        redisDao.addToBlacklist(accessToken, expiration);
-    }
-
     //Access 토큰 재발급(리프레시 토큰도 같이 재발급-탈취 방지)
     public String refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = Arrays.stream(request.getCookies())
@@ -102,7 +79,28 @@ public class MemberService {
         return jwtTokenProvider.generateToken(email);
     }
 
-    public void withdraw(HttpServletRequest request) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        //리프레시 토큰
+        String refreshToken = Arrays.stream(request.getCookies())
+                .filter(cookie -> "refreshToken".equals(cookie.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
+        if (refreshToken != null) {
+            String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+            redisDao.deleteValues(email);
+        }
+
+        //블랙리스트를 사용하여 access token 무효화
+        String accessToken = jwtAuthenticationFilter.resolveToken(request);
+        Long expiration = jwtTokenProvider.getExpiration(accessToken);
+        redisDao.addToBlacklist(accessToken, expiration);
+
+        // 클라이언트의 쿠키 삭제
+        deleteCookie(response);
+    }
+
+    public void withdraw(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = jwtAuthenticationFilter.resolveToken(request);
         if(accessToken!=null){
             Long expiration = jwtTokenProvider.getExpiration(accessToken);
@@ -119,11 +117,7 @@ public class MemberService {
             memberRepository.deleteByEmail(email);
         }
 
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        request.setAttribute("exception", null);
+        deleteCookie(response);
     }
 
     public String getUserEmail() {
@@ -137,10 +131,28 @@ public class MemberService {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            return ip.split(",")[0].trim();
+        String[] headerTypes = {"X-Forwarded-For", "Proxy-Client-IP",
+                "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "HTTP_X_FORWARDED_FOR"};
+
+        String ip = "";
+        for(String headerType: headerTypes) {
+            ip = request.getHeader(headerType);
+            if(ip != null) break;
         }
-        return request.getRemoteAddr();
+
+        if(ip==null) ip = request.getRemoteAddr();
+        return ip;
+    }
+
+    private void deleteCookie(HttpServletResponse response){
+        String[] tokensInCookie = {"refreshToken", "accessToken"};
+        for(int i=0;i<tokensInCookie.length;i++){
+            Cookie cookie = new Cookie(tokensInCookie[i], null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setMaxAge(0);
+            cookie.setPath("/");
+            response.addCookie(cookie);
+        }
     }
 }
