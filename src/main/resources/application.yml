@@ -1,3 +1,5 @@
+server:
+  forward-headers-strategy: native
 spring:
   host:
     api: http://localhost:8080

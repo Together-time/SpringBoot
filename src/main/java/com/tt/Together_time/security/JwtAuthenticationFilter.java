@@ -44,11 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (ExpiredJwtException e) {
-            // Access Token이 만료된 경우 예외 처리
-            request.setAttribute("exception", "ExpiredToken");
+            throw new ExpiredJwtException(e.getHeader(), e.getClaims(), "Expired Token");
         } catch (JwtException | IllegalArgumentException e) {
-            // 토큰이 조작된 경우 예외 처리
-            request.setAttribute("exception", "InvalidToken");
+            throw new JwtException("Invalid Token");
         }
         filterChain.doFilter(request, response);
     }
