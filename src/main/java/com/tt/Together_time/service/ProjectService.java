@@ -67,8 +67,7 @@ public class ProjectService {
                         .build()
         );
 
-        Member generatedMember = memberService.findByEmail(logged)
-                .orElseThrow(()-> new EntityNotFoundException());
+        Member generatedMember = memberService.findByEmail(logged);
 
         teamService.addTeamByCreateProject(generatedMember, project);
 

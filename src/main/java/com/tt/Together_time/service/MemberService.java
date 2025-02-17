@@ -6,6 +6,7 @@ import com.tt.Together_time.repository.MemberRepository;
 import com.tt.Together_time.repository.RedisDao;
 import com.tt.Together_time.security.JwtAuthenticationFilter;
 import com.tt.Together_time.security.JwtTokenProvider;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,8 +29,8 @@ public class MemberService {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RedisDao redisDao;
 
-    public Optional<Member> findByEmail(String email){
-        return memberRepository.findByEmail(email);
+    public Member findByEmail(String email){
+        return memberRepository.findByEmail(email).orElseThrow(()-> new EntityNotFoundException("존재하지 않는 멤버입니다."));
     }
 
     public List<Member> findMember(String keyword) {

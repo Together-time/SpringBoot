@@ -22,4 +22,11 @@ public class MemberController {
         List<Member> members = memberService.findMember(keyword);
         return ResponseEntity.ok(members);
     }
+
+    @GetMapping("/user")
+    public ResponseEntity<String> getUserInfo() {
+        String email = memberService.getUserEmail();
+        Member member = memberService.findByEmail(email);
+        return ResponseEntity.ok(member.getNickname());
+    }
 }
