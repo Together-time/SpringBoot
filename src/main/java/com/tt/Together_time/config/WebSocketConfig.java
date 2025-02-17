@@ -22,20 +22,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Value("${spring.host.front}")
     private String frontURL;
 
-    /*@PostConstruct
-    public void check() {
-        log.info("✅ WebSocketConfig가 정상적으로 로드되었습니다!");
-    }
-*/
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketHandler, "/ws/online-status")
-                .setAllowedOriginPatterns(frontURL)
-                .withSockJS();
+                .setAllowedOriginPatterns(frontURL);
 
         registry.addHandler(chatWebSocketHandler, "/ws/chat")
                 .setAllowedOriginPatterns(frontURL)
-                .addInterceptors(webSocketHandshakeInterceptor)
-                .withSockJS();
+                .addInterceptors(webSocketHandshakeInterceptor);
     }
 }
