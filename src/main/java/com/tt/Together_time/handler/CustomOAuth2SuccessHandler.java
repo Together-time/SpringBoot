@@ -22,7 +22,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final RedisDao redisDao;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttribute("kakao_account");
         String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
@@ -36,18 +36,19 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         storeRefreshToken(email, refreshToken, request);
 
-        //redisDao.setValues(email, refreshToken, Duration.ofDays(15));
+        Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge((int) Duration.ofMinutes(30).getSeconds());
+        response.addCookie(accessTokenCookie);
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
         response.addCookie(refreshTokenCookie);
-
-        // JWT를 프론트엔드로 전달
-        // HttpOnly & Secure 쿠키 사용으로 바꾸기 -> 회의 안건
-        //response.sendRedirect("http://localhost:3000?token=" + accessToken);
-        //response.sendRedirect("http://localhost:3000/auth/kakao/callback?token=" + accessToken);
     }
 
      private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {
