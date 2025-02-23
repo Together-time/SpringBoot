@@ -14,11 +14,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.time.Duration;
 
 @Service
@@ -125,6 +127,20 @@ public class MemberService {
 
         if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
             throw new AuthenticationCredentialsNotFoundException("로그인이 필요합니다.");
+        }
+
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+            Map<String, Object> attributes = oAuth2User.getAttributes();
+
+            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+            String email = (String) kakaoAccount.get("email");
+
+            if (email == null) {
+                throw new AuthenticationCredentialsNotFoundException("이메일 정보를 가져올 수 없습니다.");
+            }
+
+            return email;
         }
 
         return authentication.getName();
