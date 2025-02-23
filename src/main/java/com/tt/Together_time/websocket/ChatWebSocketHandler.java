@@ -68,7 +68,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        //type : send/read
         String payload = message.getPayload().toString();
         JsonNode jsonNode = objectMapper.readTree(payload);
 
