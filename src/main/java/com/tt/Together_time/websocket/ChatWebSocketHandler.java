@@ -9,7 +9,6 @@ import com.tt.Together_time.domain.dto.ChatDto;
 import com.tt.Together_time.service.ChatService;
 import com.tt.Together_time.service.TeamService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -22,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChatWebSocketHandler extends TextWebSocketHandler {
@@ -36,7 +34,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
-        //sessions.put(session.getId(), session);
+        sessions.put(session.getId(), session);
 
         Map<String, Object> attributes = session.getAttributes();
         String email = (String) attributes.get("email");
@@ -100,8 +98,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        //sessions.remove(session.getId());
-        //System.out.println("연결 종료: " + session.getId());
+        sessions.remove(session.getId());
 
         Map<String, Object> attributes = session.getAttributes();
         String email = (String) attributes.get("email");
@@ -122,7 +119,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         return false;
     }
 
-    private void broadcastMessage(ChatDocument chatDocument) throws Exception {
+    public void broadcastMessage(ChatDocument chatDocument) throws Exception {
         String messageJson = objectMapper.writeValueAsString(new ChatDto(chatDocument));
 
         for (WebSocketSession session : sessions.values()) {
