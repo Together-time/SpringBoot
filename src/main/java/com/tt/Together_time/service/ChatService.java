@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-    private final ProjectService projectService;
+    //private final ProjectService projectService;
     private final RedisDao redisDao;
     private final ChatMongoRepository chatMongoRepository;
     private final MongoTemplate mongoTemplate;
@@ -51,11 +51,6 @@ public class ChatService {
         chatMongoRepository.save(chatDocument);
     }
 
-    // 안 읽은 메시지 개수
-    public long getUnreadMessageCount(Long projectId, String logged) {
-        return chatMongoRepository.countByProjectIdAndUnreadByEmail(projectId, logged);
-    }
-
     // 메시지 읽음 처리
     public void markMessagesAsRead(Long projectId, String logged) {
         Query query = new Query(Criteria.where("projectId").is(projectId)
@@ -68,5 +63,10 @@ public class ChatService {
         Query query = new Query(Criteria.where("projectId").is(projectId)
                 .and("unreadBy.email").is(logged));
         return mongoTemplate.find(query, ChatDocument.class);
+    }
+
+    // 안 읽은 메시지 개수
+    public long getUnreadMessageCount(Long projectId, String logged) {
+        return chatMongoRepository.countByProjectIdAndUnreadByEmail(projectId, logged);
     }
 }

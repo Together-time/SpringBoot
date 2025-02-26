@@ -2,10 +2,10 @@ package com.tt.Together_time.websocket;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tt.Together_time.domain.dto.ChatDto;
 import com.tt.Together_time.domain.dto.MemberDto;
 import com.tt.Together_time.domain.dto.Sender;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
-import com.tt.Together_time.domain.dto.ChatDto;
 import com.tt.Together_time.service.ChatService;
 import com.tt.Together_time.service.TeamService;
 import lombok.RequiredArgsConstructor;
@@ -44,23 +44,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             connectedUsers.putIfAbsent(projectId, new HashSet<>());
             connectedUsers.get(projectId).add(email);
 
-            List<ChatDto> latestMessages = chatService.getLatestMessages(projectId)
-                    .stream()
+            String readNotification = String.format("{\"type\": \"read\", \"projectId\": %d, \"email\": \"%s\"}", projectId, email);
+            chatService.publishMessage(String.valueOf(projectId), readNotification, "read");
+
+            List<ChatDto> latestMessages = chatService.getLatestMessages(projectId).stream()
                     .map(ChatDto::new)
                     .collect(Collectors.toList());
             session.sendMessage(new TextMessage(objectMapper.writeValueAsString(latestMessages)));
-
-            chatService.markMessagesAsRead(projectId, email);
-
-            List<ChatDto> updatedMessages = chatService.getUnreadMessages(projectId, email)
-                    .stream()
-                    .map(ChatDto::new)
-                    .collect(Collectors.toList());
-
-            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(updatedMessages)));
-
-            String readNotification = String.format("{\"type\": \"read\", \"projectId\": %d, \"email\": \"%s\"}", projectId, email);
-            chatService.publishMessage(String.valueOf(projectId), readNotification, "read");
         }
     }
 
@@ -80,14 +70,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         ChatDocument chatDocument = objectMapper.readValue(payload, ChatDocument.class);
         List<MemberDto> teamMembers = teamService.findByProjectId(projectId);
 
+        Set<String> connectedEmails = connectedUsers.getOrDefault(projectId, new HashSet<>());
+
         List<Sender> unread = teamMembers.stream()
                 .map(member->new Sender(member.getNickname(), member.getEmail()))
-                .filter(member -> !connectedUsers.getOrDefault(projectId, new HashSet<>())
-                        .contains(member.getEmail()))
+                .filter(member -> !connectedEmails.contains(member.getEmail()))
                 .collect(Collectors.toList());
         chatDocument.setUnreadBy(unread);
         chatDocument.setProjectId(projectId);
-        chatService.publishMessage(String.valueOf(projectId), payload, "send");
+
+        ChatDto chatDto = new ChatDto(chatDocument);
+
+        chatService.publishMessage(String.valueOf(projectId), objectMapper.writeValueAsString(chatDto), "send");
         chatService.saveMessageToMongoDB(chatDocument);
     }
 
@@ -120,12 +114,41 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     }
 
     public void broadcastMessage(ChatDocument chatDocument) throws Exception {
-        String messageJson = objectMapper.writeValueAsString(new ChatDto(chatDocument));
+        String messageJson = objectMapper.writeValueAsString(chatDocument);
 
         for (WebSocketSession session : sessions.values()) {
             if (session.isOpen()) {
                 session.sendMessage(new TextMessage(messageJson));
             }
+        }
+    }
+    // 읽음 처리를 프로젝트 내 다른 사용자들에게 브로드캐스트
+    public void notifyReadStatus(Long projectId, String email) {
+        List<ChatDocument> unreadMessages = chatService.getUnreadMessages(projectId, email);
+
+        if(!unreadMessages.isEmpty())
+            chatService.markMessagesAsRead(projectId, email);
+
+        for (ChatDocument chatDocument : unreadMessages) {
+            int unreadCount = chatDocument.getUnreadBy().size();
+
+            String readJson = String.format(
+                    "{\"type\":\"read\",\"projectId\":%d,\"messageId\":\"%s\",\"unreadCount\":%d}",
+                    projectId, chatDocument.getId(), unreadCount
+            );
+
+            sessions.values().stream()
+                    .filter(session -> {
+                        String sessionEmail = (String) session.getAttributes().get("email");
+                        return !email.equals(sessionEmail);
+                    })
+                    .forEach(session -> {
+                        try {
+                            session.sendMessage(new TextMessage(readJson));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
         }
     }
 }
