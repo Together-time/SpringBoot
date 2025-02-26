@@ -1,6 +1,9 @@
 package com.tt.Together_time.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+       import com.tt.Together_time.domain.mongodb.ChatDocument;
+import com.tt.Together_time.websocket.ChatWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -15,18 +18,24 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class RedisMessageSubscriber implements MessageListener {
     private final ObjectMapper objectMapper;
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    private final ChatWebSocketHandler chatWebSocketHandler;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
             String payload = new String(message.getBody());
-            Message chatMessage = objectMapper.readValue(payload, Message.class);
+            JsonNode jsonNode = objectMapper.readTree(payload);
+            String type = jsonNode.get("type").asText();
 
-            for (WebSocketSession session : sessions.values()) {    //웹소켓 세션에 브로드캐스트
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage)));
-                }
+            if(type.equals("send")){
+                ChatDocument chatMessage = objectMapper.treeToValue(jsonNode, ChatDocument.class);
+                chatWebSocketHandler.broadcastMessage(chatMessage);
+            }else if(type.equals("read")){
+                Long projectId = jsonNode.get("projectId").asLong();
+                String email = jsonNode.get("email").asText();
+
+                // 프로젝트에 연결된 세션 중 현재 접속한 사용자에게만 읽음 처리 보냄
+                chatWebSocketHandler.notifyReadStatus(projectId, email);
             }
         } catch (Exception e) {
             System.err.println("RedisMessageSubscriber error: " + e.getMessage());
