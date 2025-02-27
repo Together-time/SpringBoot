@@ -1,8 +1,9 @@
 package com.tt.Together_time.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.tt.Together_time.domain.mongodb.ChatDocument;
-import com.tt.Together_time.domain.rdb.Project;
 import com.tt.Together_time.repository.ChatMongoRepository;
 import com.tt.Together_time.repository.RedisDao;
 import lombok.RequiredArgsConstructor;
@@ -13,21 +14,33 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-    //private final ProjectService projectService;
     private final RedisDao redisDao;
     private final ChatMongoRepository chatMongoRepository;
     private final MongoTemplate mongoTemplate;
 
     public void publishMessage(String projectId, String message, String type) {
-        //Project project = projectService.findById(Long.valueOf(projectId));
-        String channel = "chat:project:" + projectId + (type.equals("read") ? ":read" : ":message");
-        redisDao.publishMessage(channel, message);
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> messageMap = new HashMap<>();
+            messageMap.put("type", type);
+            messageMap.put("projectId", projectId);
+            messageMap.put("chat", message);
+
+            String jsonMessage = objectMapper.writeValueAsString(messageMap);
+            String channel = "chat:project:" + projectId;
+            redisDao.publishMessage(channel, jsonMessage);
+
+        } catch (JsonProcessingException e) {
+            System.err.println("메시지 변환 오류: " + e.getMessage());
+        }
     }
 
     public List<ChatDocument> getLatestMessages(Long projectId) {
