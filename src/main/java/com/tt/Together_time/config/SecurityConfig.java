@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService) // OAuth2 사용자 정보 가져오기
                         )
                         .successHandler(customOAuth2SuccessHandler) // 로그인 성공 시 JWT 발급
-                        .defaultSuccessUrl(frontURL, true)
+                        //.defaultSuccessUrl(frontURL, true)
                 );
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, redisDao), UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -7,11 +7,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
@@ -22,9 +24,12 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisDao redisDao;
 
+    @Value("${spring.host.front}")
+    private String frontURL;
+
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-        log.info("여기 시작");
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        log.info("✅ CustomOAuth2SuccessHandler 시작됨");
 
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttribute("kakao_account");
@@ -58,6 +63,8 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
+
+        response.sendRedirect(frontURL);
     }
 
      private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {
