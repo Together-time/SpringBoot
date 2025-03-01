@@ -6,15 +6,16 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -23,6 +24,8 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        log.info("여기 시작");
+
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttribute("kakao_account");
         String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
@@ -33,26 +36,28 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         String accessToken = jwtTokenProvider. generateToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
-
+        log.info("token {} {}", accessToken, refreshToken);
         storeRefreshToken(email, refreshToken, request);
 
         Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
         accessTokenCookie.setHttpOnly(true);
-        //accessTokenCookie.setSecure(true);
+        accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge((int) Duration.ofMinutes(30).getSeconds());
-        response.addCookie(accessTokenCookie);
+
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        //refreshTokenCookie.setSecure(true);
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
+
+
+        /*accessTokenCookie.setAttribute("SameSite", "None");
+        refreshTokenCookie.setAttribute("SameSite", "None");*/
+
+        response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
-
-        accessTokenCookie.setAttribute("SameSite", "None");
-        refreshTokenCookie.setAttribute("SameSite", "None");
-
     }
 
      private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {
