@@ -29,8 +29,6 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-        log.info("✅ CustomOAuth2SuccessHandler 시작됨");
-
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttribute("kakao_account");
         String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
@@ -41,7 +39,6 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
 
         String accessToken = jwtTokenProvider. generateToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
-        log.info("token {} {}", accessToken, refreshToken);
         storeRefreshToken(email, refreshToken, request);
 
         Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
@@ -56,10 +53,6 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
-
-
-        /*accessTokenCookie.setAttribute("SameSite", "None");
-        refreshTokenCookie.setAttribute("SameSite", "None");*/
 
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);

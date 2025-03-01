@@ -98,7 +98,6 @@ public class MemberService {
 
         //블랙리스트를 사용하여 access token 무효화
         String accessToken = jwtAuthenticationFilter.resolveToken(request);
-        log.info("token {} {}", refreshToken, accessToken);
         Long expiration = jwtTokenProvider.getExpiration(accessToken);
         redisDao.addToBlacklist(accessToken, expiration);
 

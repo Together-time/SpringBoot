@@ -54,25 +54,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
     public String resolveToken(HttpServletRequest request) {
-        log.info("요청된 쿠키 목록: {}", (Object) request.getCookies());
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                log.info("🍪 쿠키 이름: {}, 값: {}", cookie.getName(), cookie.getValue());
-            }
-        } else {
-            log.info("❌ 요청된 쿠키가 없습니다.");
-        }
-
-        /*
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName()))
-                    return cookie.getValue();
-            }
-        }
-        return null;
-         */
         String accessToken = Arrays.stream(request.getCookies())
                 .filter(cookie -> "accessToken".equals(cookie.getName()))
                 .findFirst()
