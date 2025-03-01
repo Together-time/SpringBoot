@@ -1,5 +1,6 @@
 package com.tt.Together_time.websocket;
 
+import com.tt.Together_time.service.MemberService;
 import com.tt.Together_time.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,13 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
     private final OnlineStatusService onlineStatusService;
+    private final MemberService memberService;
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String email = session.getPrincipal().getName();
+        String email = memberService.getUserEmail();
         onlineStatusService.setOnline(email);  // 온라인 상태 등록
         sessions.add(session);
-        //session.sendMessage(new TextMessage("접속한 사용자 : "+email));
         broadcastOnlineStatus(email, true);
     }
     //연결 종료
