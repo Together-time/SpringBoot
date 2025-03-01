@@ -3,8 +3,7 @@ package com.tt.Together_time.websocket;
 import com.tt.Together_time.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -23,17 +22,29 @@ public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        OAuth2AuthenticationToken authenticationToken = (OAuth2AuthenticationToken) session.getPrincipal();
-        OAuth2User oAuth2User = authenticationToken.getPrincipal();
-        Map<String, Object> kakaoAccount = oAuth2User.getAttribute("kakao_account");
-        String email = (String) kakaoAccount.get("email");
+        Authentication authentication = (Authentication) session.getPrincipal();
+        if (authentication == null) {
+            log.error("WebSocket 연결 실패: 인증되지 않은 사용자");
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
+        String email = authentication.getPrincipal().toString();
+
         onlineStatusService.setOnline(email);
         sessions.add(session);
         broadcastOnlineStatus(email, true);
     }
     //연결 종료
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        String email = session.getPrincipal().getName();
+        Authentication authentication = (Authentication) session.getPrincipal();
+        if (authentication == null) {
+            log.error("WebSocket 연결 실패: 인증되지 않은 사용자");
+            session.close(CloseStatus.POLICY_VIOLATION);
+            return;
+        }
+
+        String email = authentication.getPrincipal().toString();
         onlineStatusService.setOffline(email);
         sessions.remove(session);
         broadcastOnlineStatus(email, false);
