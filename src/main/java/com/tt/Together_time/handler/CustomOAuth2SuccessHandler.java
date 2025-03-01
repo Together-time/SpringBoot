@@ -31,7 +31,7 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
             throw new IllegalArgumentException("OAuth2 로그인 시 이메일 정보를 가져올 수 없습니다.");
         }
 
-        String accessToken = jwtTokenProvider.generateToken(email);
+        String accessToken = jwtTokenProvider. generateToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
 
         storeRefreshToken(email, refreshToken, request);
@@ -49,6 +49,10 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
         response.addCookie(refreshTokenCookie);
+
+        accessTokenCookie.setAttribute("SameSite", "None");
+        refreshTokenCookie.setAttribute("SameSite", "None");
+
     }
 
      private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {
