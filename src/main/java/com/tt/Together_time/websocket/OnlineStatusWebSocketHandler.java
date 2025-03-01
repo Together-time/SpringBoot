@@ -3,6 +3,9 @@ package com.tt.Together_time.websocket;
 import com.tt.Together_time.service.MemberService;
 import com.tt.Together_time.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -20,8 +23,14 @@ public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        String email = memberService.getUserEmail();
-        onlineStatusService.setOnline(email);  // 온라인 상태 등록
+        String email = "";
+        Authentication authentication = (Authentication) session.getPrincipal();
+        if (authentication instanceof OAuth2AuthenticationToken) {
+            OAuth2User oauth2User = (OAuth2User) ((OAuth2AuthenticationToken) authentication).getPrincipal();
+            email = oauth2User.getAttribute("email");  // 카카오 로그인 시 이메일 가져오기
+        }
+
+        onlineStatusService.setOnline(email);
         sessions.add(session);
         broadcastOnlineStatus(email, true);
     }
