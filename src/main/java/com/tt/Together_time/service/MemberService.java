@@ -11,6 +11,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -95,6 +97,7 @@ public class MemberService {
 
         //블랙리스트를 사용하여 access token 무효화
         String accessToken = jwtAuthenticationFilter.resolveToken(request);
+        log.info("token {} {}", refreshToken, accessToken);
         Long expiration = jwtTokenProvider.getExpiration(accessToken);
         redisDao.addToBlacklist(accessToken, expiration);
 
