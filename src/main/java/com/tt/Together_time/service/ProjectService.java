@@ -33,7 +33,6 @@ public class ProjectService {
     private final MemberService memberService;
     private final RedisDao redisDao;
 
-
     @Transactional
     public void updateProjectTags(String logged, Long projectId, List<String> tags) {
         Project project = findById(projectId);
