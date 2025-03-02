@@ -20,9 +20,9 @@ public class AuthController {
     private String frontURL;
 
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Boolean> logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
         memberService.logout(request, response);
-        response.sendRedirect(frontURL);
+        return ResponseEntity.ok(true);
     }
 
     @PostMapping("/refresh")    //새로운 access 토큰 발급

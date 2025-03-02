@@ -3,19 +3,17 @@ package com.tt.Together_time.config;
 import com.tt.Together_time.websocket.ChatWebSocketHandler;
 import com.tt.Together_time.websocket.OnlineStatusWebSocketHandler;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-@Slf4j
 @Configuration
 @EnableWebSocket
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
-    private final OnlineStatusWebSocketHandler webSocketHandler;
+    private final OnlineStatusWebSocketHandler onlineStatusWebSocketHandler;
     private final ChatWebSocketHandler chatWebSocketHandler;
     private final WebSocketHandshakeInterceptor webSocketHandshakeInterceptor;
 
@@ -24,7 +22,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketHandler, "/ws/online-status")
+        registry.addHandler(onlineStatusWebSocketHandler, "/ws/online-status")
                 .setAllowedOriginPatterns(frontURL);
 
         registry.addHandler(chatWebSocketHandler, "/ws/chat")

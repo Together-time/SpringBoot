@@ -6,6 +6,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -23,17 +25,12 @@ public class Project {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    /*
-    @LastModifiedDate
-    private LocalDateTime lastEditedAt;
-    */
-    /*
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Team> teamList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project")
-    private List<Message> messageList = new ArrayList<>();
-    */
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Schedule> scheduleList = new ArrayList<>();
+
     //private Long views;
 
     /*@Enumerated(EnumType.STRING)
