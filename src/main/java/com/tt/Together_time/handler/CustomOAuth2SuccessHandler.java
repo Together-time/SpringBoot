@@ -6,6 +6,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -15,14 +17,18 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisDao redisDao;
 
+    @Value("${spring.host.front}")
+    private String frontURL;
+
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttribute("kakao_account");
         String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
@@ -31,9 +37,8 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
             throw new IllegalArgumentException("OAuth2 로그인 시 이메일 정보를 가져올 수 없습니다.");
         }
 
-        String accessToken = jwtTokenProvider.generateToken(email);
+        String accessToken = jwtTokenProvider. generateToken(email);
         String refreshToken = jwtTokenProvider.generateRefreshToken(email);
-
         storeRefreshToken(email, refreshToken, request);
 
         Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
@@ -41,14 +46,18 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
         accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         accessTokenCookie.setMaxAge((int) Duration.ofMinutes(30).getSeconds());
-        response.addCookie(accessTokenCookie);
+
 
         Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge((int) Duration.ofDays(15).getSeconds());
+
+        response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
+
+        response.sendRedirect(frontURL);
     }
 
      private void storeRefreshToken(String email, String refreshToken, HttpServletRequest request) {

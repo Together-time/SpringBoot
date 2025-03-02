@@ -10,7 +10,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.time.Duration;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -102,6 +105,7 @@ public class MemberService {
         deleteCookie(response);
     }
 
+    @Transactional
     public void withdraw(HttpServletRequest request, HttpServletResponse response) {
         String accessToken = jwtAuthenticationFilter.resolveToken(request);
         if(accessToken!=null){

@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final RedisDao redisDao;
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomOAuth2UserService customOAuth2UserService;
-
+    private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
     @Value("${spring.host.front}")
     private String frontURL;
 
@@ -45,8 +45,8 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService) // OAuth2 사용자 정보 가져오기
                         )
-                        .successHandler(new CustomOAuth2SuccessHandler(jwtTokenProvider, redisDao)) // 로그인 성공 시 JWT 발급
-                        .defaultSuccessUrl(frontURL, true)
+                        .successHandler(customOAuth2SuccessHandler) // 로그인 성공 시 JWT 발급
+                        //.defaultSuccessUrl(frontURL, true)
                 );
         http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, redisDao), UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -68,7 +68,7 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(Arrays.asList(frontURL));
         config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
