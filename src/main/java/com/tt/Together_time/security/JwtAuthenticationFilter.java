@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String email = jwtTokenProvider.getEmailFromToken(token);
                     // JWT 기반으로 DefaultOAuth2User 생성 - 일관되게
                     Map<String, Object> attributes = new HashMap<>();
-                    attributes.put("email", email); // 최소한의 attributes 설정
+                    attributes.put("email", email);
 
                     DefaultOAuth2User oAuth2User = new DefaultOAuth2User(
                             Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),

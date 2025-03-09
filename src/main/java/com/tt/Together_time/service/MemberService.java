@@ -132,8 +132,8 @@ public class MemberService {
         if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
             throw new AuthenticationCredentialsNotFoundException("로그인이 필요합니다.");
         }
-
-        /*if (authentication instanceof OAuth2AuthenticationToken) {
+        /*
+        if (authentication instanceof OAuth2AuthenticationToken) {
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
             Map<String, Object> attributes = oAuth2User.getAttributes();
 
@@ -145,7 +145,8 @@ public class MemberService {
             }
 
             return email;
-        }*/
+        }
+        */
 
         return authentication.getName();
     }
