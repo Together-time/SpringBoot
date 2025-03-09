@@ -1,5 +1,6 @@
 package com.tt.Together_time.websocket;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tt.Together_time.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,8 @@ public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
 
         onlineStatusService.setOnline(email);
         sessions.add(session);
+
+        sendCurrentOnlineUsers(session);
         broadcastOnlineStatus(email, true);
     }
     //연결 종료
@@ -52,6 +55,15 @@ public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
     private void broadcastOnlineStatus(String email, boolean isOnline) throws Exception {
         String message = String.format("{\"email\":\"%s\", \"isOnline\":%b}", email, isOnline);
         for (WebSocketSession session : sessions) {
+            session.sendMessage(new TextMessage(message));
+        }
+    }
+
+    private void sendCurrentOnlineUsers(WebSocketSession session) throws Exception {
+        Set<String> onlineUsers = onlineStatusService.getOnlineUsers();
+        String message = String.format("{\"onlineUsers\":%s}", new ObjectMapper().writeValueAsString(onlineUsers));
+
+        if (session.isOpen()) {
             session.sendMessage(new TextMessage(message));
         }
     }
