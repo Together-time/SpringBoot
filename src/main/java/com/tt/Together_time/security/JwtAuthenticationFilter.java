@@ -13,13 +13,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -41,8 +45,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if (jwtTokenProvider.validateToken(token)) {
                     String email = jwtTokenProvider.getEmailFromToken(token);
+                    // JWT 기반으로 DefaultOAuth2User 생성 - 일관되게
+                    Map<String, Object> attributes = new HashMap<>();
+                    attributes.put("email", email);
+
+                    DefaultOAuth2User oAuth2User = new DefaultOAuth2User(
+                            Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
+                            attributes,
+                            "email"); // getName()이 email을 반환하도록 설정
+
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
-                            email, null, Collections.emptyList());
+                            oAuth2User, null, oAuth2User.getAuthorities()); // Principal을 DefaultOAuth2User로 설정
+
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
