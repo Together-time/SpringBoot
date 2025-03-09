@@ -14,6 +14,7 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 .collect(Collectors.toList());
         chatDocument.setUnreadBy(unread);
         chatDocument.setProjectId(projectId);
-
+        chatDocument.setCreatedAt(LocalDateTime.now());
         ChatDto chatDto = new ChatDto(chatDocument);
 
         chatService.publishMessage(String.valueOf(projectId), objectMapper.writeValueAsString(chatDto), "send");
@@ -113,8 +114,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         return false;
     }
 
-    public void broadcastMessage(ChatDocument chatDocument) throws Exception {
-        String messageJson = objectMapper.writeValueAsString(chatDocument);
+    public void broadcastMessage(ChatDto chatDto) throws Exception {
+        String messageJson = objectMapper.writeValueAsString(chatDto);
 
         for (WebSocketSession session : sessions.values()) {
             if (session.isOpen()) {

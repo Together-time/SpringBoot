@@ -2,6 +2,8 @@ package com.tt.Together_time.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -18,5 +20,9 @@ public class OnlineStatusService {
 
     public boolean isOnline(String email){
         return onlineMembers.containsKey(email);
+    }
+
+    public Set<String> getOnlineUsers() {
+        return new HashSet<>(onlineMembers.keySet());
     }
 }

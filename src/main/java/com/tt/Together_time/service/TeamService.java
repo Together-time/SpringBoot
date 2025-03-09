@@ -90,13 +90,13 @@ public class TeamService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(()->new EntityNotFoundException());
         //권한 확인
-        boolean isExistingMember = existsByProjectIdAndMemberEmail(projectId, logged);
+        boolean isExistingMember = existsByProjectIdAndMemberEmail(project.getId(), logged);
 
         if(isExistingMember){
-            teamRepository.deleteMemberByEmail(logged, projectId);
+            teamRepository.deleteMemberByEmail(logged, project.getId());
 
             if(findByProjectId(projectId).size()==0)
-                projectRepository.deleteById(projectId);
+                projectRepository.deleteById(project.getId());
         }
     }
 
