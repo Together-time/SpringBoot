@@ -56,7 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
                             oAuth2User, null, oAuth2User.getAuthorities()); // Principal을 DefaultOAuth2User로 설정
-                    //Authentication authentication = new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }

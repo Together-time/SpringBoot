@@ -132,22 +132,6 @@ public class MemberService {
         if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
             throw new AuthenticationCredentialsNotFoundException("로그인이 필요합니다.");
         }
-        /*
-        if (authentication instanceof OAuth2AuthenticationToken) {
-            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            Map<String, Object> attributes = oAuth2User.getAttributes();
-
-            Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-            String email = (String) kakaoAccount.get("email");
-
-            if (email == null) {
-                throw new AuthenticationCredentialsNotFoundException("이메일 정보를 가져올 수 없습니다.");
-            }
-
-            return email;
-        }
-        */
-
         return authentication.getName();
     }
 
