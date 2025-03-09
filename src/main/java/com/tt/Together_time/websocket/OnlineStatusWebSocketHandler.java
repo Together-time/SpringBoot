@@ -62,6 +62,9 @@ public class OnlineStatusWebSocketHandler extends TextWebSocketHandler {
     private void sendCurrentOnlineUsers(WebSocketSession session) throws Exception {
         Set<String> onlineUsers = onlineStatusService.getOnlineUsers();
         String message = String.format("{\"onlineUsers\":%s}", new ObjectMapper().writeValueAsString(onlineUsers));
-        session.sendMessage(new TextMessage(message));
+
+        if (session.isOpen()) {
+            session.sendMessage(new TextMessage(message));
+        }
     }
 }
