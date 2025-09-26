@@ -1,4 +1,4 @@
-# 같이가요 (Together Time) - Backend API Server
+# 같이가요 (Together Time) - Backend
 
 > 팀 단위 일정 관리 및 실시간 소통을 지원하는 플랫폼의 백엔드 서버
 
